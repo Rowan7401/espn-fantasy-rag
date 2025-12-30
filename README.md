@@ -53,3 +53,4 @@ Mac commands. Windows may be different
 2. npm install @pinecone-database/pinecone openai axios dotenv
 3. npm install -D tsx      
 4. Create .env.local (create the file then copy what's in .env.example and input keys I sent you)
+5. npm install pinecone
