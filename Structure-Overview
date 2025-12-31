@@ -1,0 +1,43 @@
+*** Generated with Gemini. Subject for optimization / simplification ***
+
+my-fantasy-rag/
+├── .env.local                # Your ESPN keys and API keys (DO NOT COMMIT)
+├── next.config.mjs
+├── package.json
+├── tsconfig.json
+│
+├── src/
+│   ├── app/                  # Next.js App Router
+│   │   ├── api/
+│   │   │   ├── chat/         # The endpoint your UI calls to talk to the AI
+│   │   │   │   └── route.ts
+│   │   │   └── ingest/       # (Optional) Endpoint to trigger data loading via web
+│   │   │       └── route.ts
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   └── page.tsx          # The main chat interface
+│   │
+│   ├── components/           # React UI Components
+│   │   ├── Chat/
+│   │   │   ├── ChatInput.tsx
+│   │   │   ├── ChatMessage.tsx
+│   │   │   └── ChatWindow.tsx
+│   │   └── Layout/
+│   │       └── Header.tsx
+│   │
+│   ├── lib/                  # The "Brain" (Backend Logic & Clients)
+│   │   ├── clients/          # Database & API configurations
+│   │   │   ├── pinecone.ts   # Pinecone client singleton
+│   │   │   └── openai.ts     # OpenAI client singleton
+│   │   │
+│   │   ├── espn/             # ESPN specific logic
+│   │   │   ├── fetcher.ts    # The axios fetcher with cookies
+│   │   │   └── types.ts      # TypeScript interfaces for ESPN JSON
+│   │   │
+│   │   └── rag/              # RAG specific logic
+│   │       ├── chunking.ts   # Your semantic chunking logic
+│   │       ├── embed.ts      # Helper to create embeddings
+│   │       └── context.ts    # Logic to query Pinecone and format context
+│   │
+│   └── scripts/              # Standalone scripts for heavy lifting
+│       └── ingest-data.ts    # Run this locally to fill the DB (Better than API route)
