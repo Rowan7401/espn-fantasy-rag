@@ -23,5 +23,45 @@ def get_data():
         print(f"Error: {e}")
         print("Double check your SWID and ESPN_S2 cookies if you get an Authentication Error.")
 
+def export_matchups():
+    try:
+        league = League(league_id=LEAGUE_ID, year=YEAR, espn_s2=ESPN_S2, swid=SWID)
+        
+        all_matchups = []
+        
+        # Determine the last completed week (usually 1-17 or 18)
+        # We loop through weeks to gather data
+        for week in range(1, 18): 
+            matchups = league.scoreboard(week)
+            if not matchups:
+                break # Stop if we hit a week with no data
+                
+            for m in matchups:
+                # Store the data in a dictionary
+                data = {
+                    "Week": week,
+                    "Home_Team": m.home_team.team_name,
+                    "Home_Score": m.home_score,
+                    "Away_Team": m.away_team.team_name,
+                    "Away_Score": m.away_score,
+                    "Winner": m.home_team.team_name if m.home_score > m.away_score else m.away_team.team_name
+                }
+                all_matchups.append(data)
+        
+        # Convert to a Pandas DataFrame
+        df = pd.DataFrame(all_matchups)
+        
+        # Save to CSV
+        df.to_csv("league_matchups.csv", index=False)
+        print("✅ Export complete! Saved to 'league_matchups.csv'")
+        
+        # Show a preview in the terminal
+        print("\n--- Recent Matchups Preview ---")
+        print(df.tail(10))
+
+    except Exception as e:
+        print(f"Error: {e}")
+
 if __name__ == "__main__":
-    get_data()
+    # get_data()
+    export_matchups()
