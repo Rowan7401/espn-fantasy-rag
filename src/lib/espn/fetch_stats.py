@@ -7,6 +7,28 @@ YEAR = 2025
 SWID = '{6F99240C-DF05-4B91-9924-0CDF057B9189}'
 ESPN_S2 = 'AEB1s59QEZt6LuCgFAE%2FqT8VLCi5dheTouHkrhTzlFMKS32Fk9XyO%2Fv3mktNeMMZL%2BkKmq3Pbk0jGNPcf0f1HwunJtRd4SWlJWd%2Febu3vY5DR%2FIqquCkENQQlqlSEDAXms%2Bc9RV%2FmR0mZR2vcrFK04E1cqCdW358%2B6fFrSe7fvjkl5CPJjawdP7g44W%2FopTUwYve2FPbli4ORNAPAUrURHbqIEC5IjBPBmtQ0jXSbInuDStWnjjRlMAGsb9LM6dUCxKAJcr%2F8mAxmY2ZhdZ8cKHX'
 
+def export_draft_results():
+    try:
+        league = League(league_id=LEAGUE_ID, year=YEAR, espn_s2=ESPN_S2, swid=SWID)
+        draft_data = []
+
+        # league.draft is a list of Pick objects
+        for pick in league.draft:
+            draft_data.append({
+                "Round": pick.round_num,
+                "Pick_Overall": pick.round_pick,
+                "Team": pick.team.team_name,
+                "Player": pick.playerName,
+                "Position": pick.playerId # Or player object attributes
+            })
+
+        df = pd.DataFrame(draft_data)
+        df.to_csv("draft_results.csv", index=False)
+        print("✅ Draft results exported to 'draft_results.csv'")
+        
+    except Exception as e:
+        print(f"Error fetching draft: {e}")
+
 def get_data():
     try:
         # Initialize the League object
@@ -64,4 +86,5 @@ def export_matchups():
 
 if __name__ == "__main__":
     # get_data()
-    export_matchups()
+    # export_matchups()
+    export_draft_results()
