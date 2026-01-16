@@ -39,10 +39,10 @@ Step 3.3: Final Embedding for Pinecone
 Once you have your chunks (strings), you need to create the final vector for each chunk to store in Pinecone.
 
 Summary of the Workflow:
-1. Ingest: espnFetcher.ts pulls JSON using cookies.
+1. Ingest: lib/fetch_stats.py pulls JSON using cookies.
 2. Transform: Convert JSON -> Natural Language Narratives (e.g., "Team A beat Team B").
 3. Chunk: Run semanticChunking to group these sentences intelligently by topic.
-4. Embed: Run createVectorsForPinecone to turn chunks into numbers.
+4. Embed: Run /src/scripts/ingest-data.ts to turn chunks into numbers.
 5. Store: Push to Pinecone. "
 ***
 
@@ -54,3 +54,18 @@ Mac commands. Windows may be different
 3. npm install -D tsx      
 4. Create .env.local (create the file then copy what's in .env.example and input keys I sent you)
 5. npm install pinecone
+
+************   SETTING UP PYTHON FETCH SCRIPT  *************
+(Install Python for your OS)
+*** Could be different syntax for powershell...
+
+# Create virtual environment (will create many files so creating outside of project can be helpful)
+1. python3 -m venv venv  
+# Activate and use your virtual environment
+2. source /{{file-path-to-your-venv}}/venv/bin/activate 
+# Install .env variable helper within the virtual environment 
+3. pip install python-dotenv    
+# Install libraries for exporting data to CSV and custom ESPN api
+4. python3 -m pip install espn_api pandas            
+# Run the fetcher script (ex: from project root)
+5. python3 src/lib/espn/fetch_stats.py     
