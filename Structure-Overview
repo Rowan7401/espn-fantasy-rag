@@ -31,7 +31,7 @@ my-fantasy-rag/
 │   │   │   └── openai.ts     # OpenAI client singleton
 │   │   │
 │   │   ├── espn/             # ESPN specific logic
-│   │   │   ├── fetcher.ts    # The axios fetcher with cookies
+│   │   │   ├── fetch_stats.py  # The python fetcher with cookies
 │   │   │   └── types.ts      # TypeScript interfaces for ESPN JSON
 │   │   │
 │   │   └── rag/              # RAG specific logic
