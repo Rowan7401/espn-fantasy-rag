@@ -18,7 +18,7 @@ export async function getContext(query: string) {
   // We include metadata so we can get the 'text' property
   const queryResponse = await index.query({
     vector,
-    topK: 5,
+    topK: 8,
     includeMetadata: true,
     // Optional: Add logic here to filter by 'type' if the query contains certain keywords
   });

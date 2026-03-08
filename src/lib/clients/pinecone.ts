@@ -32,7 +32,7 @@ await index.upsertRecords(records);
 
 const results = await index.searchRecords({
   query: {
-    topK: 5,
+    topK: 8,
     inputs: { text: query },
   },
 });
@@ -41,7 +41,7 @@ console.log(results);
 
 const rerankedResults = await index.searchRecords({
     query: {
-      topK: 5,
+      topK: 8,
       inputs: { text: query },
     },
     rerank: {
