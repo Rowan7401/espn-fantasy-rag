@@ -7,15 +7,18 @@ const pc = new Pinecone({ apiKey: CONFIG.PINECONE_API_KEY });
 const index = pc.index("fantasy-football");
 
 export async function getContext(query: string) {
-  // 1. Convert user's question into a vector
+
+  console.log("🔎 getContext() called with query:", query);
+
   const embeddingResponse = await openai.embeddings.create({
     model: "text-embedding-3-small",
     input: query,
   });
+
   const vector = embeddingResponse.data[0].embedding;
 
-  // 2. Query Pinecone for the top 5 most relevant records
-  // We include metadata so we can get the 'text' property
+  console.log("Generated embedding vector length:", vector.length);
+
   const queryResponse = await index.query({
     vector,
     topK: 8,
@@ -23,11 +26,14 @@ export async function getContext(query: string) {
     // Optional: Add logic here to filter by 'type' if the query contains certain keywords
   });
 
-  // 3. Extract the text from the results and join them into one block
+  console.log("Pinecone matches:", queryResponse.matches?.length);
+
   const contextText = queryResponse.matches
-    .map(match => match.metadata?.text)
+    ?.map(match => match.metadata?.text)
     .filter(Boolean)
     .join("\n---\n");
+
+  console.log("Context text assembled:", contextText);
 
   return contextText;
 }

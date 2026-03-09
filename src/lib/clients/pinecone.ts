@@ -1,7 +1,7 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 import { CONFIG } from '../../config';
 
-console.log(`Connecting to: ${CONFIG.DATABASE_URL}`);
+// console.log(`Connecting to: ${CONFIG.DATABASE_URL}`);
 
 
 // Following Pinecone 'Get Started' tutorial
