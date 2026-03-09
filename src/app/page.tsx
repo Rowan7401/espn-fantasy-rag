@@ -10,66 +10,71 @@ export default function ChatPage() {
   const isLoading = status === 'submitted' || status === 'streaming';
 
   return (
-    <div className="flex flex-col w-full max-w-2xl py-24 mx-auto stretch">
-      <h1 className="text-2xl font-bold mb-8 text-center text-blue-600">
-        🏆 League Insider AI
-      </h1>
+    <main
+      className="min-h-screen bg-cover bg-center flex flex-col items-center justify-center"
+      style={{ backgroundImage: "url('/fantasy_rag_bot_bg.png')" }}
+    >
+      <div className="flex flex-col w-full max-w-2xl py-24 mx-auto stretch">
+        <h1 className="text-4xl font-bold fixed top-4 text-center text-white">
+          🏆 League Insider AI
+        </h1>
 
-      <div className="space-y-4 mb-20 px-4">
-        {messages.map((m) => (
-          <div
-            key={m.id}
-            className={`p-4 rounded-xl shadow-sm ${m.role === 'user'
+        <div className="space-y-4 mb-20 px-4">
+          {messages.map((m) => (
+            <div
+              key={m.id}
+              className={`p-4 rounded-xl shadow-sm ${m.role === 'user'
                 ? 'bg-blue-50 border border-blue-100 ml-8'
                 : 'bg-white border border-gray-200 mr-8'
-              }`}
-          >
-            <span className="text-xs font-bold uppercase tracking-wider text-gray-400 block mb-2">
-              {m.role === 'user' ? 'You' : 'Commish AI'}
-            </span>
+                }`}
+            >
+              <span className="text-xs font-bold uppercase tracking-wider text-gray-400 block mb-2">
+                {m.role === 'user' ? 'You' : 'Commish AI'}
+              </span>
 
-            {m.parts?.map((part, i) => {
-              if (part.type === 'text') {
-                return (
-                  <p key={i} className="text-gray-800 whitespace-pre-wrap">
-                    {part.text}
-                  </p>
-                );
-              }
-              return null;
-            })}
-          </div>
-        ))}
+              {m.parts?.map((part, i) => {
+                if (part.type === 'text') {
+                  return (
+                    <p key={i} className="text-gray-800 whitespace-pre-wrap">
+                      {part.text}
+                    </p>
+                  );
+                }
+                return null;
+              })}
+            </div>
+          ))}
 
-        {isLoading && (
-          <div className="text-gray-400 italic text-sm animate-pulse">
-            Consulting the league archives...
-          </div>
-        )}
+          {isLoading && (
+            <div className="text-gray-400 italic text-sm animate-pulse">
+              Consulting the league archives...
+            </div>
+          )}
+        </div>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+
+            console.log("Submitting message:", input);
+
+            sendMessage({
+              role: "user",
+              parts: [{ type: "text", text: input }],
+            });
+
+            setInput("");
+          }}
+          className="fixed bottom-8 w-full max-w-2xl p-4 bg-white border-t"
+        >
+          <input
+            className="w-full p-4 border border-gray-300 text-gray-600 rounded-2xl shadow-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+            value={input}
+            placeholder="Ask about interesting facts/data from our league..."
+            onChange={(e) => setInput(e.target.value)}
+          />
+        </form>
       </div>
-
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-
-          console.log("Submitting message:", input);
-
-          sendMessage({
-            role: "user",
-            parts: [{ type: "text", text: input }],
-          });
-
-          setInput("");
-        }}
-        className="fixed bottom-0 w-full max-w-2xl p-4 bg-white border-t"
-      >
-        <input
-          className="w-full p-4 border border-gray-300 text-gray-600 rounded-2xl shadow-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
-          value={input}
-          placeholder="Ask about interesting facts/data from our league..."
-          onChange={(e) => setInput(e.target.value)}
-        />
-      </form>
-    </div>
+    </main>
   );
 }
