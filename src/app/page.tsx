@@ -10,16 +10,19 @@ export default function ChatPage() {
   const isLoading = status === 'submitted' || status === 'streaming';
 
   return (
+
     <main
-      className="min-h-screen bg-cover bg-center flex flex-col items-center justify-center"
+      className="h-screen bg-cover bg-center flex flex-col items-center justify-center"
       style={{ backgroundImage: "url('/fantasy_rag_bot_bg.png')" }}
     >
-      <div className="flex flex-col w-full max-w-2xl py-24 mx-auto stretch">
-        <h1 className="text-4xl font-bold fixed top-4 text-center text-white">
-          🏆 League Insider AI
-        </h1>
+      <div className="flex flex-col w-full max-w-2xl py-12 mx-auto stretch bg-black/60 min-h-screen items-center">
+        <div className="text-center mb-10">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-wide bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-500 bg-clip-text text-transparent drop-shadow-lg">
+            🏆 League Insider AI
+          </h1>
+        </div>
 
-        <div className="space-y-4 mb-20 px-4">
+        <div className="space-y-4 mb-20 px-4 ">
           {messages.map((m) => (
             <div
               key={m.id}
@@ -29,7 +32,7 @@ export default function ChatPage() {
                 }`}
             >
               <span className="text-xs font-bold uppercase tracking-wider text-gray-400 block mb-2">
-                {m.role === 'user' ? 'You' : 'Commish AI'}
+                {m.role === 'user' ? 'You' : 'Fantasy RAG bot'}
               </span>
 
               {m.parts?.map((part, i) => {
@@ -65,16 +68,19 @@ export default function ChatPage() {
 
             setInput("");
           }}
-          className="fixed bottom-8 w-full max-w-2xl p-4 bg-white border-t"
+          className="fixed bottom-8 w-full max-w-2xl p-4 bg-white/25 backdrop-blur-lg border-t"
         >
           <input
-            className="w-full p-4 border border-gray-300 text-gray-600 rounded-2xl shadow-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
+            className="bg-white/70 backdrop-blur-lg w-full p-4 border border-gray-300 text-gray-600 rounded-2xl shadow-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
             value={input}
             placeholder="Ask about interesting facts/data from our league..."
             onChange={(e) => setInput(e.target.value)}
           />
         </form>
       </div>
+      <footer className="fixed bottom-1 md:bottom-4 right-1 md:right-6 text-gray-400 text-sm md:text-lg backdrop-blur-sm bg-black/30 px-3 py-1 rounded-md">
+        Created by <span className="text-white font-semibold">Rowan Dillon</span>
+      </footer>
     </main>
   );
 }
