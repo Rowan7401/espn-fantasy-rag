@@ -17,6 +17,135 @@ YEAR = int(os.getenv("YEAR"))
 SWID = os.getenv("SWID")
 ESPN_S2 = os.getenv("ESPN_S2")
 
+def export_expectation_vs_reality():
+    try:
+        league = League(league_id=LEAGUE_ID, year=YEAR, espn_s2=ESPN_S2, swid=SWID)
+
+        data = []
+
+        for team in league.teams:
+
+            owner_name = "Unknown"
+            if team.owners:
+                owner_name = team.owners[0].get("displayName", "Unknown")
+
+            for player in team.roster:
+
+                if not player.stats:
+                    continue
+
+                season = player.stats[0]
+
+                actual_avg = season.get("avg_points", 0)
+                projected_total = season.get("projected_points", 0)
+                projected_avg = season.get("projected_avg_points", 0)
+                actual_total = season.get("points", 0)
+
+                value_ratio = 0
+                if projected_total != 0:
+                    value_ratio = actual_total / projected_total
+
+                data.append({
+                    "Team": team.team_name,
+                    "Owner": owner_name,
+                    "Player": player.name,
+                    "Position": player.position,
+
+                    "Actual_Total_Points": actual_total,
+                    "Projected_Total_Points": projected_total,
+
+                    "Actual_Avg_Points": actual_avg,
+                    "Projected_Avg_Points": projected_avg,
+
+                    "Points_Difference": actual_total - projected_total,
+                    "Avg_Points_Difference": actual_avg - projected_avg,
+
+                    "Value_Ratio": value_ratio
+                })
+
+        df = pd.DataFrame(data)
+        df.to_csv("expectation_vs_reality.csv", index=False)
+
+        print("✅ Exported expectation vs reality stats")
+
+    except Exception as e:
+        print(f"Error exporting projection stats: {e}")
+
+def inspect_first_player_stats():
+    try:
+        league = League(
+            league_id=LEAGUE_ID,
+            year=YEAR,
+            espn_s2=ESPN_S2,
+            swid=SWID
+        )
+
+        team = league.teams[0]
+        player = team.roster[0]
+
+        print(f"\nTeam: {team.team_name}")
+        print(f"Player: {player.name}")
+        print(f"Position: {player.position}")
+
+        print("\n--- RAW PLAYER STATS ---")
+
+        if hasattr(player, "stats"):
+            for key, value in player.stats.items():
+                print(f"{key}: {value}")
+        else:
+            print("Player has no stats attribute.")
+
+    except Exception as e:
+        print(f"Error inspecting player stats: {e}")
+
+def export_player_season_stats():
+    try:
+        league = League(league_id=LEAGUE_ID, year=YEAR, espn_s2=ESPN_S2, swid=SWID)
+
+        data = []
+
+        for team in league.teams:
+
+            owner_name = "Unknown"
+            if team.owners:
+                owner_name = team.owners[0].get("displayName", "Unknown")
+
+            for player in team.roster:
+
+                if not player.stats:
+                    continue
+
+                season = player.stats[0]
+                breakdown = season.get("breakdown", {})
+
+                data.append({
+                    "Team": team.team_name,
+                    "Owner": owner_name,
+                    "Player": player.name,
+                    "Position": player.position,
+
+                    "Total_Points": season.get("points", 0),
+
+                    "Rushing_Attempts": breakdown.get("rushingAttempts", 0),
+                    "Rushing_Yards": breakdown.get("rushingYards", 0),
+                    "Rushing_Yards_Per_Attempt": breakdown.get("rushingYardsPerAttempt", 0),
+
+                    "Receptions": breakdown.get("receivingReceptions", 0),
+                    "Receiving_Yards": breakdown.get("receivingYards", 0),
+                    "Receiving_TDs": breakdown.get("receivingTouchdowns", 0),
+                    "Receiving_Targets": breakdown.get("receivingTargets", 0),
+                    "YAC": breakdown.get("receivingYardsAfterCatch", 0),
+                    "Yards_Per_Reception": breakdown.get("receivingYardsPerReception", 0)
+                })
+
+        df = pd.DataFrame(data)
+        df.to_csv("player_season_stats.csv", index=False)
+
+        print("✅ Exported player season stats")
+
+    except Exception as e:
+        print(f"Error exporting stats: {e}")
+
 
 def export_teams():
     try:
@@ -139,4 +268,7 @@ if __name__ == "__main__":
     # get_data()
     # export_matchups()
     # export_draft_results()
-    export_teams()
+    # export_teams()
+    # export_player_season_stats()
+    # inspect_first_player_stats()
+    export_expectation_vs_reality()
