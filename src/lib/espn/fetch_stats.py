@@ -36,14 +36,18 @@ def export_expectation_vs_reality():
 
                 season = player.stats[0]
 
-                actual_avg = season.get("avg_points", 0)
-                projected_total = season.get("projected_points", 0)
-                projected_avg = season.get("projected_avg_points", 0)
-                actual_total = season.get("points", 0)
+                actual_points_total = season.get("points", 0)
+                projected_points_total = season.get("projected_points", 0)
+
+                actual_points_per_game = season.get("avg_points", 0)
+                projected_points_per_game = season.get("projected_avg_points", 0)
+
+                points_difference_total = actual_points_total - projected_points_total
+                points_difference_per_game = actual_points_per_game - projected_points_per_game
 
                 value_ratio = 0
-                if projected_total != 0:
-                    value_ratio = actual_total / projected_total
+                if projected_points_total != 0:
+                    value_ratio = actual_points_total / projected_points_total
 
                 data.append({
                     "Team": team.team_name,
@@ -51,14 +55,14 @@ def export_expectation_vs_reality():
                     "Player": player.name,
                     "Position": player.position,
 
-                    "Actual_Total_Points": actual_total,
-                    "Projected_Total_Points": projected_total,
+                    "Actual_Points_Total": actual_points_total,
+                    "Projected_Points_Total": projected_points_total,
 
-                    "Actual_Avg_Points": actual_avg,
-                    "Projected_Avg_Points": projected_avg,
+                    "Actual_Points_Per_Game": actual_points_per_game,
+                    "Projected_Points_Per_Game": projected_points_per_game,
 
-                    "Points_Difference": actual_total - projected_total,
-                    "Avg_Points_Difference": actual_avg - projected_avg,
+                    "Points_Difference_Total": points_difference_total,
+                    "Points_Difference_Per_Game": points_difference_per_game,
 
                     "Value_Ratio": value_ratio
                 })
@@ -124,18 +128,25 @@ def export_player_season_stats():
                     "Player": player.name,
                     "Position": player.position,
 
-                    "Total_Points": season.get("points", 0),
+                    "Fantasy_Points_Total": season.get("points", 0),
 
-                    "Rushing_Attempts": breakdown.get("rushingAttempts", 0),
-                    "Rushing_Yards": breakdown.get("rushingYards", 0),
+                    # Rushing
+                    "Rushing_Attempts_Total": breakdown.get("rushingAttempts", 0),
+                    "Rushing_Yards_Per_Game": breakdown.get("rushingYards", 0),
                     "Rushing_Yards_Per_Attempt": breakdown.get("rushingYardsPerAttempt", 0),
 
-                    "Receptions": breakdown.get("receivingReceptions", 0),
-                    "Receiving_Yards": breakdown.get("receivingYards", 0),
-                    "Receiving_TDs": breakdown.get("receivingTouchdowns", 0),
-                    "Receiving_Targets": breakdown.get("receivingTargets", 0),
-                    "YAC": breakdown.get("receivingYardsAfterCatch", 0),
-                    "Yards_Per_Reception": breakdown.get("receivingYardsPerReception", 0)
+                    # Receiving
+                    "Receptions_Total": breakdown.get("receivingReceptions", 0),
+                    "Receiving_Targets_Total": breakdown.get("receivingTargets", 0),
+                    "Receiving_TDs_Total": breakdown.get("receivingTouchdowns", 0),
+
+                    "Receiving_Yards_Per_Game": breakdown.get("receivingYards", 0),
+
+                    # Efficiency metrics
+                    "Yards_Per_Reception": breakdown.get("receivingYardsPerReception", 0),
+
+                    # Advanced stat
+                    "Yards_After_Catch_Total": breakdown.get("receivingYardsAfterCatch", 0)
                 })
 
         df = pd.DataFrame(data)

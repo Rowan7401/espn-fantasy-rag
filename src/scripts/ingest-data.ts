@@ -302,20 +302,47 @@ const ingestableSentences = ["Team Lamar Jack0ff is managed by Chazdawg01 (Chaz 
 //   return `draft-2025-${round}-${pick}-${team}-${player}`;
 // }
 
+// function createTeamSummaryReadableId(sentence: string): string {
+//   const teamMatch = sentence.match(/the team (.+?), owned/i);
+
+//   const team = teamMatch
+//     ? teamMatch[1]
+//       .toLowerCase()
+//       .replace(/[^a-z0-9]/g, "")
+//       .substring(0, 16)
+//     : "unknownteam";
+
+//   return `team-2025-${team}`;
+// }
+
 /**
- * 2. ID HELPER (TEAM SUMMARY)
+ * 2. ID HELPER
  */
+
 function createReadableId(sentence: string): string {
-  const teamMatch = sentence.match(/the team (.+?), owned/i);
+  const teamMatch = sentence.match(/Team (.+?) is managed/i);
+  const playerMatch = sentence.match(/Their player (.+?) plays/i);
+  const positionMatch = sentence.match(/plays (\w+)/i);
 
   const team = teamMatch
     ? teamMatch[1]
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "")
-      .substring(0, 16)
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "")
+        .substring(0, 16)
     : "unknownteam";
 
-  return `team-2025-${team}`;
+  const player = playerMatch
+    ? playerMatch[1]
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "")
+        .substring(0, 16)
+    : "unknownplayer";
+
+  const position = positionMatch
+    ? positionMatch[1].toLowerCase()
+    : "unk";
+
+  return `playerstats-2025-${team}-${player}-${position}`;
 }
 
 // const teamMatch = sentence.match(/the team (.+?), owned/i);
@@ -331,6 +358,22 @@ function createReadableId(sentence: string): string {
 // if (lossesMatch) metadata.losses = parseInt(lossesMatch[1]);
 // if (pointsForMatch) metadata.points_for = parseFloat(pointsForMatch[1]);
 // if (pointsAgainstMatch) metadata.points_against = parseFloat(pointsAgainstMatch[1]);
+
+// const draftMetadata: Record<string, any> = {
+//   text: sentence,
+//   type: "fantasy_draft_pick",
+//   league: "fantasy_football",
+//   season: 2025,
+// };
+
+// const metadata = {
+//   text: sentence,
+//   type: "team_summary",
+//   league: "fantasy_football",
+//   season: 2025,
+// };
+
+
 /**
  * 3. MAIN INGESTION FUNCTION
  */
@@ -353,19 +396,13 @@ async function manuallyUpsertData() {
     const vectors = embeddingResponse.data.map((item, idx) => {
       const sentence = currentBatch[idx];
 
-      // const draftMetadata: Record<string, any> = {
-      //   text: sentence,
-      //   type: "fantasy_draft_pick",
-      //   league: "fantasy_football",
-      //   season: 2025,
-      // };
-
-      const metadata = {
+      const metadata: Record<string, any> = {
         text: sentence,
-        type: "team_summary",
+        type: "player_season_stats",
         league: "fantasy_football",
         season: 2025,
       };
+
 
       // Parse fields from the sentence
       const teamMatch = sentence.match(/Team (.+?) is managed/i);
