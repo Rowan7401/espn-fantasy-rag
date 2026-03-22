@@ -104,7 +104,12 @@ def inspect_first_player_stats():
 
 def export_player_season_stats():
     try:
-        league = League(league_id=LEAGUE_ID, year=YEAR, espn_s2=ESPN_S2, swid=SWID)
+        league = League(
+            league_id=LEAGUE_ID,
+            year=YEAR,
+            espn_s2=ESPN_S2,
+            swid=SWID
+        )
 
         data = []
 
@@ -116,43 +121,65 @@ def export_player_season_stats():
 
             for player in team.roster:
 
-                if not player.stats:
+                if not player.stats or 0 not in player.stats:
                     continue
 
                 season = player.stats[0]
                 breakdown = season.get("breakdown", {})
 
-                data.append({
-                    "Team": team.team_name,
-                    "Owner": owner_name,
-                    "Player": player.name,
-                    "Position": player.position,
+                # --- Calculate games played from team record ---
+                team_wins = breakdown.get("teamWin", 0)
+                team_losses = breakdown.get("teamLoss", 0)
+                games_played = int(team_wins + team_losses)
 
-                    "Fantasy_Points_Total": season.get("points", 0),
+                # --- ESPN averages (per game) ---
+                avg_receiving_yards = breakdown.get("receivingYards", 0)
+                avg_rushing_yards = breakdown.get("rushingYards", 0)
+                avg_points = season.get("avg_points", 0)
+
+                # --- Derived totals ---
+                receiving_yards_total = round(avg_receiving_yards * games_played, 2)
+                rushing_yards_total = round(avg_rushing_yards * games_played, 2)
+
+                data.append({
+                    "team": team.team_name,
+                    "owner": owner_name,
+                    "player": player.name,
+                    "position": player.position,
+
+                    # Games
+                    "games_played": games_played,
+
+                    # Fantasy scoring
+                    "points_total": season.get("points", 0),
+                    "avg_points": avg_points,
 
                     # Rushing
-                    "Rushing_Attempts_Total": breakdown.get("rushingAttempts", 0),
-                    "Rushing_Yards_Per_Game": breakdown.get("rushingYards", 0),
-                    "Rushing_Yards_Per_Attempt": breakdown.get("rushingYardsPerAttempt", 0),
+                    "rushing_attempts_total": breakdown.get("rushingAttempts", 0),
+                    "avg_rushing_yards": avg_rushing_yards,
+                    "rushing_yards_total": rushing_yards_total,
+                    "rushing_yards_per_attempt": breakdown.get("rushingYardsPerAttempt", 0),
 
-                    # Receiving
-                    "Receptions_Total": breakdown.get("receivingReceptions", 0),
-                    "Receiving_Targets_Total": breakdown.get("receivingTargets", 0),
-                    "Receiving_TDs_Total": breakdown.get("receivingTouchdowns", 0),
+                    # Receiving totals
+                    "receptions_total": breakdown.get("receivingReceptions", 0),
+                    "targets_total": breakdown.get("receivingTargets", 0),
+                    "receiving_TDs_total": breakdown.get("receivingTouchdowns", 0),
 
-                    "Receiving_Yards_Per_Game": breakdown.get("receivingYards", 0),
+                    # Receiving averages + totals
+                    "avg_receiving_yards": avg_receiving_yards,
+                    "receiving_yards_total": receiving_yards_total,
 
-                    # Efficiency metrics
-                    "Yards_Per_Reception": breakdown.get("receivingYardsPerReception", 0),
+                    # Efficiency
+                    "yards_per_reception": breakdown.get("receivingYardsPerReception", 0),
 
-                    # Advanced stat
-                    "Yards_After_Catch_Total": breakdown.get("receivingYardsAfterCatch", 0)
+                    # Advanced totals
+                    "yards_after_catch_total": breakdown.get("receivingYardsAfterCatch", 0)
                 })
 
         df = pd.DataFrame(data)
         df.to_csv("player_season_stats.csv", index=False)
 
-        print("✅ Exported player season stats")
+        print("✅ Exported player season stats with averages + totals")
 
     except Exception as e:
         print(f"Error exporting stats: {e}")
@@ -280,6 +307,6 @@ if __name__ == "__main__":
     # export_matchups()
     # export_draft_results()
     # export_teams()
-    # export_player_season_stats()
+    export_player_season_stats()
     # inspect_first_player_stats()
-    export_expectation_vs_reality()
+    # export_expectation_vs_reality()
