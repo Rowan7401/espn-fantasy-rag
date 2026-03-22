@@ -17,6 +17,78 @@ YEAR = int(os.getenv("YEAR"))
 SWID = os.getenv("SWID")
 ESPN_S2 = os.getenv("ESPN_S2")
 
+def export_box_scores():
+    try:
+        league = League(
+            league_id=LEAGUE_ID,
+            year=YEAR,
+            espn_s2=ESPN_S2,
+            swid=SWID
+        )
+
+        all_data = []
+
+        for week in range(1, 18):
+            box_scores = league.box_scores(week)
+
+            if not box_scores:
+                break
+
+            for box in box_scores:
+
+                def process_team(team, players, opponent, week):
+                    owner_name = "Unknown"
+                    if team.owners:
+                        owner_name = team.owners[0].get("displayName", "Unknown")
+
+                    for player in players:
+                        points = player.points if player.points is not None else 0
+
+                        is_starter = player.slot_position not in ["BE", "IR"]
+
+                        all_data.append({
+                            "Week": week,
+                            "Team": team.team_name,
+                            "Owner": owner_name,
+                            "Opponent": opponent.team_name,
+
+                            "Player": player.name,
+                            "Position": player.position,
+                            "Slot": player.slot_position,
+
+                            "Points": points,
+                            "Started": is_starter,
+
+                            # 🔥 Precompute useful flags
+                            "Is_Zero": points == 0,
+                            "Is_Zero_Start": is_starter and points == 0,
+                            "Is_Bad_Start": is_starter and points < 5
+                        })
+
+                # 🔥 IMPORTANT: lineup contains ALL players
+                process_team(
+                    box.home_team,
+                    box.home_lineup,
+                    box.away_team,
+                    week
+                )
+
+                process_team(
+                    box.away_team,
+                    box.away_lineup,
+                    box.home_team,
+                    week
+                )
+
+        df = pd.DataFrame(all_data)
+        df.to_csv("league_box_scores.csv", index=False)
+
+        print("✅ Exported full box score data (with correct starter detection)")
+
+    except Exception as e:
+        print(f"Error exporting box scores: {e}")
+
+        
 def export_expectation_vs_reality():
     try:
         league = League(league_id=LEAGUE_ID, year=YEAR, espn_s2=ESPN_S2, swid=SWID)
@@ -309,4 +381,5 @@ if __name__ == "__main__":
     # export_teams()
     # export_player_season_stats()
     # inspect_first_player_stats()
-    export_expectation_vs_reality()
+    # export_expectation_vs_reality()
+    export_box_scores()

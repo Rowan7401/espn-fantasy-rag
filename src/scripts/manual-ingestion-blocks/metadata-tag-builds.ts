@@ -76,3 +76,54 @@ function playerSeasonStatsMetadataObj() {
       if (yprMatch) metadata.yards_per_reception = parseFloat(yprMatch[1]);
       if (yacMatch) metadata.yards_after_catch_total = parseFloat(yacMatch[1]);
 }
+
+function expectationVsReality() {
+    const teamMatch = sentence.match(/Team (.+?) is managed/i);
+    const ownerMatch = sentence.match(/managed by (.+?)\./i);
+    const playerMatch = sentence.match(/Their player (.+?) plays/i);
+    const positionMatch = sentence.match(/plays (\w+)/i);
+    const actualTotalMatch = sentence.match(
+      /scored ([\d.]+) actual total fantasy points/i,
+    );
+    const projectedTotalMatch = sentence.match(/projection of ([\d.]+)/i);
+    const diffTotalMatch = sentence.match(/by ([\d.-]+) total points/i);
+
+    const actualAvgMatch = sentence.match(
+      /averaged ([\d.]+) points compared/i,
+    );
+    const projectedAvgMatch = sentence.match(
+      /projected average of ([\d.]+)/i,
+    );
+    const diffAvgMatch = sentence.match(
+      /difference of ([\d.-]+) points per game/i,
+    );
+
+    const valueRatioMatch = sentence.match(/value ratio was ([\d.]+)/i);
+
+    const performanceMatch = sentence.match(
+      /they (outperformed|underperformed)/i,
+    );
+
+    if (teamMatch) metadata.team = teamMatch[1];
+    if (ownerMatch) metadata.owner = ownerMatch[1].trim();
+    if (playerMatch) metadata.player = playerMatch[1];
+    if (positionMatch) metadata.position = positionMatch[1];
+    if (actualTotalMatch)
+      metadata.actual_points_total = parseFloat(actualTotalMatch[1]);
+    if (projectedTotalMatch)
+      metadata.projected_points_total = parseFloat(projectedTotalMatch[1]);
+    if (diffTotalMatch)
+      metadata.points_difference = parseFloat(diffTotalMatch[1]);
+
+    if (actualAvgMatch)
+      metadata.actual_avg_points = parseFloat(actualAvgMatch[1]);
+    if (projectedAvgMatch)
+      metadata.projected_avg_points = parseFloat(projectedAvgMatch[1]);
+    if (diffAvgMatch)
+      metadata.avg_points_difference = parseFloat(diffAvgMatch[1]);
+
+    if (valueRatioMatch)
+      metadata.value_ratio = parseFloat(valueRatioMatch[1]);
+
+    if (performanceMatch) metadata.performance = performanceMatch[1];
+}

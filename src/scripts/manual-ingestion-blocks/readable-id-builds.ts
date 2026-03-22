@@ -50,3 +50,17 @@ function createReadableIdFromMetadata(metadata: Record<string, any>): string {
   
     return `playerstats-2025-${team}-${player}-${position}`;
   }
+
+  function createExpectationId(metadata: Record<string, any>): string {
+    const normalize = (val: string, fallback: string) =>
+      (val || fallback)
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "")
+        .substring(0, 20);
+  
+    const team = normalize(metadata.team, "unknownteam");
+    const player = normalize(metadata.player, "unknownplayer");
+    const position = (metadata.position || "unk").toLowerCase();
+  
+    return `expectation-2025-${team}-${player}-${position}`;
+  }
