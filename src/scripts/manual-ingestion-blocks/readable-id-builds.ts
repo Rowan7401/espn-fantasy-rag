@@ -36,3 +36,17 @@ function createTeamSummaryReadableId(sentence: string): string {
 
   return `team-2025-${team}`;
 }
+
+function createReadableIdFromMetadata(metadata: Record<string, any>): string {
+    const normalize = (val: string, fallback: string) =>
+      (val || fallback)
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "")
+        .substring(0, 20);
+  
+    const team = normalize(metadata.team, "unknownteam");
+    const player = normalize(metadata.player, "unknownplayer");
+    const position = (metadata.position || "unk").toLowerCase();
+  
+    return `playerstats-2025-${team}-${player}-${position}`;
+  }

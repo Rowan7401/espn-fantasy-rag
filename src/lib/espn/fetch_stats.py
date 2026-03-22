@@ -307,6 +307,6 @@ if __name__ == "__main__":
     # export_matchups()
     # export_draft_results()
     # export_teams()
-    export_player_season_stats()
+    # export_player_season_stats()
     # inspect_first_player_stats()
-    # export_expectation_vs_reality()
+    export_expectation_vs_reality()
