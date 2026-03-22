@@ -12,17 +12,17 @@ export default function ChatPage() {
   return (
 
     <main
-      className="h-screen bg-cover bg-center flex flex-col items-center justify-center"
+      className="h-screen bg-cover bg-center flex flex-col items-center"
       style={{ backgroundImage: "url('/fantasy_rag_bot_bg.png')" }}
     >
-      <div className="flex flex-col w-full max-w-2xl py-12 mx-auto stretch bg-black/60 min-h-screen items-center">
+      <div className="flex flex-col w-full max-w-2xl py-8 mx-auto stretch bg-black/60 border-3 h-[88vh] items-center">
         <div className="text-center mb-10">
           <h1 className="text-3xl md:text-4xl font-bold tracking-wide bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-500 bg-clip-text text-transparent drop-shadow-lg">
             🏆 League Insider AI
           </h1>
         </div>
 
-        <div className="space-y-4 mb-20 px-4 ">
+        <div className="flex-1 overflow-y-auto space-y-4 px-4 w-full">
           {messages.map((m) => (
             <div
               key={m.id}
