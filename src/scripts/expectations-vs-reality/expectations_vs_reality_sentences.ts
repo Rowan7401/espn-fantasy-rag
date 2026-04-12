@@ -1,4 +1,4 @@
-const ingestableSentences = [
+const expectationsIngestableSentences = [
     "Team Lamar Jack0ff is managed by Chazdawg01 (Chaz Morton). Their player Brian Thomas Jr. plays WR. They scored 138.8 actual total fantasy points compared to a projection of 270.04. This means they underperformed expectations by -131.24 total points. On a per game basis, they averaged 9.91 points compared to a projected average of 15.88, a difference of -5.970000000000001 points per game. Their overall value ratio was 0.5139979262331507.",
 
     "Team Lamar Jack0ff is managed by Chazdawg01 (Chaz Morton). Their player D'Andre Swift plays RB. They scored 228.6 actual total fantasy points compared to a projection of 226.78. This means they outperformed expectations by 1.8199999999999932 total points. On a per game basis, they averaged 14.29 points compared to a projected average of 13.34, a difference of 0.9499999999999993 points per game. Their overall value ratio was 1.0080253990651733.",

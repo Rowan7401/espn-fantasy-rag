@@ -1,4 +1,4 @@
-const ingestableSentences = [
+const teamSummaryIngestableSentences = [
     "In the 2025 fantasy football season, the team Lamar Jack0ff, owned by Chazdawg01, finished with a 9 win and 4 loss record. They scored 1645.86 total points while allowing 1404.44 points against them.",
     
     "In the 2025 fantasy football season, the team Start Diggs in yo butt twin, owned by Rowdog7401, finished with a 6 win and 7 loss record. They scored 1456.58 total points while allowing 1426.00 points against them.",

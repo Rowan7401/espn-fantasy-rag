@@ -1,4 +1,4 @@
-const ingestableSentences = [
+const boxScoreIngestableSentences = [
     "In week 1, team Start Diggs in yo butt twin managed by Rowdog7401 (Rowan Dillon) played against Aidan’s Maidens and scored 129.32 total points. Their top performers were Zay Flowers (28.1 pts), James Cook III (21.2 pts), Saquon Barkley (18.4 pts). Their worst starter was Lions D/ST at D/ST with 2.0 points. ",
 
     "In week 1, team Aidan’s Maidens managed by Aidan Miller played against Start Diggs in yo butt twin and scored 87.72 total points. Their top performers were Christian McCaffrey (23.2 pts), Breece Hall (16.5 pts), Davante Adams (9.1 pts). Their worst starter was Mark Andrews at TE with 1.5 points. ",
