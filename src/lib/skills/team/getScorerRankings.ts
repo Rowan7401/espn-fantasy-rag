@@ -12,7 +12,7 @@ export function sortTeamByScoring(
   });
 }
 
-export async function getNthBestRankingTeam(
+export async function getNthBestScoringTeam(
     n: number,
     season: number = 2025
   ) {

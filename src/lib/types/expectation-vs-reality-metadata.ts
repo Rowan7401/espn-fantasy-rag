@@ -1,4 +1,6 @@
 export interface ExpectationSummary {
+// metadata type ID
+  type: "expectation_vs_reality";
 // Points actually averaged 
   actual_avg_points: number;
 // Total actual points
@@ -27,8 +29,6 @@ export interface ExpectationSummary {
   team: string;
 // English readable sentence summary
   text: string;
-// metadata type ID
-  type: string;
 // Calculated number above 1 is outperforming below, under
   value_ratio: number;
 }

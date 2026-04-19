@@ -12,7 +12,7 @@ export function sortTeamForPunchingBag(
   });
 }
 
-export async function getNthBestRankingTeam(
+export async function getNthPunchingBagTeam(
     n: number,
     season: number = 2025
   ) {

@@ -16,30 +16,35 @@ function isExpectationSummary(m: unknown): m is ExpectationSummary {
     typeof obj.actual_points_total === "number" &&
     typeof obj.position === "string" &&
     typeof obj.projected_avg_points === "number" &&
-    typeof obj.projected_points_total === "string"
+    typeof obj.projected_points_total === "number"
   );
 }
 
-export async function getExepectationSummary(
-  season: number = 2025,
-): Promise<ExpectationSummary[]> {
-  const res = await index.query({
-    vector: new Array(1536).fill(0),
-    topK: 12,
-    includeMetadata: true,
-    filter: {
-      type: "team_summary",
-      season,
-    },
-  });
 
-  const teams: ExpectationSummary[] = [];
+export async function getExpectationSummary(
+    season: number = 2025,
+  ): Promise<ExpectationSummary[]> {
+    const DUMMY_VECTOR = Array.from({ length: 1536 }, () => 0);
 
-  for (const match of res.matches ?? []) {
-    if (isExpectationSummary(match.metadata)) {
-      teams.push(match.metadata);
+    const res = await  index.query({
+        vector: DUMMY_VECTOR,
+        topK: 200,
+        includeMetadata: true,
+        filter: {
+          type: "expectation_vs_reality",
+          season: season,
+        },
+      });
+  
+  
+    const players: ExpectationSummary[] = [];
+  
+    for (const match of res.matches ?? []) {
+  
+      if (isExpectationSummary(match.metadata)) {
+        players.push(match.metadata);
+      }
     }
+  
+    return players;
   }
-
-  return teams;
-}
