@@ -1,12 +1,12 @@
-import { getNthValueRatioPlayer } from "../skills/player/getValueRatioRank";
+import { getNthScoringPlayer } from "../skills/player/getPlayerScorerRank";
 
 async function run() {
   try {
-    const player = await getNthValueRatioPlayer({
-        n: 3,
-        order: "asc",
+    const player = await getNthScoringPlayer({
+        n: 10,
+        order: "desc",
         filter: {
-          position: "QB",
+          position: "",
         },
       });
 
