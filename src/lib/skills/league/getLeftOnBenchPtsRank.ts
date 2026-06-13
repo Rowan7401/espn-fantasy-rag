@@ -1,10 +1,9 @@
 import { getBoxScoreSummaries } from "./getBoxScoreSummaryMetadata";
 
-type MissedOpportunityCount = {
+type BenchedPointsT = {
   owner: string;
   team: string;
   missedOpportunityCount: number;
-  missedBenchPoints: number;
 };
 
 export async function testBoxScoreWiring() {
@@ -17,7 +16,7 @@ export async function getTotalMissedOpportunities(
 ) {
   const boxScores = await getBoxScoreSummaries(season);
 
-  const missedOpCountsObj = new Map<string, MissedOpportunityCount>();
+  const counts = new Map<string, MissedOpportunityCount>();
 
   for (const boxScore of boxScores) {
     const hasMissed = boxScore.has_missed_opportunity === true
@@ -25,18 +24,16 @@ export async function getTotalMissedOpportunities(
     if (!hasMissed) continue;
 
     const key = boxScore.owner;
-    const currTeam = missedOpCountsObj.get(key);
+    const existing = counts.get(key);
 
-
-    missedOpCountsObj.set(key, {
+    counts.set(key, {
       owner: boxScore.owner,
       team: boxScore.team,
-      missedOpportunityCount: (currTeam?.missedOpportunityCount ?? 0) + 1,
-      missedBenchPoints: (currTeam?.missedBenchPoints ?? 0) + (boxScore.missed_bench_points ?? 0),
+      missedOpportunityCount: (existing?.missedOpportunityCount ?? 0) + 1,
     });
   }
 
-  return Array.from(missedOpCountsObj.values()).sort((a, b) =>
+  return Array.from(counts.values()).sort((a, b) =>
     order === "desc"
       ? b.missedOpportunityCount - a.missedOpportunityCount
       : a.missedOpportunityCount - b.missedOpportunityCount

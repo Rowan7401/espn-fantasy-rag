@@ -8,6 +8,7 @@ async function run() {
       owner: r.owner,
       team: r.team,
       missed_opportunity_count: r.missedOpportunityCount,
+      missed_bench_points_total: r.missedBenchPoints,
     }));
 
     console.log("🏈 Missed Opportunity Leaderboard:");
