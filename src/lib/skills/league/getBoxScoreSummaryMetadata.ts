@@ -24,7 +24,7 @@ export async function getBoxScoreSummaries(
 ): Promise<BoxScoreSummary[]> {
   const res = await index.query({
     vector: new Array(1536).fill(0),
-    topK: 350,
+    topK: 550,
     includeMetadata: true,
     filter: {
       type: "box_scores_summary",

@@ -17,7 +17,7 @@ export async function getTotalMissedOpportunities(
 ) {
   const boxScores = await getBoxScoreSummaries(season);
 
-  const missedOpCountsObj = new Map<string, MissedOpportunityCount>();
+  const missedOpsMap = new Map<string, MissedOpportunityCount>();
 
   for (const boxScore of boxScores) {
     const hasMissed = boxScore.has_missed_opportunity === true
@@ -25,10 +25,10 @@ export async function getTotalMissedOpportunities(
     if (!hasMissed) continue;
 
     const key = boxScore.owner;
-    const currTeam = missedOpCountsObj.get(key);
+    const currTeam = missedOpsMap.get(key);
 
 
-    missedOpCountsObj.set(key, {
+    missedOpsMap.set(key, {
       owner: boxScore.owner,
       team: boxScore.team,
       missedOpportunityCount: (currTeam?.missedOpportunityCount ?? 0) + 1,
@@ -36,7 +36,7 @@ export async function getTotalMissedOpportunities(
     });
   }
 
-  return Array.from(missedOpCountsObj.values()).sort((a, b) =>
+  return Array.from(missedOpsMap.values()).sort((a, b) =>
     order === "desc"
       ? b.missedOpportunityCount - a.missedOpportunityCount
       : a.missedOpportunityCount - b.missedOpportunityCount
