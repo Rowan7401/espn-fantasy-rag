@@ -6,6 +6,7 @@ function isBoxScoreSummary(m: unknown): m is BoxScoreSummary {
   
     const obj = m as Record<string, unknown>;
   
+    // Only strictly require the absolute core fields that every record MUST have
     return (
       obj.type === "box_scores_summary" &&
       typeof obj.owner === "string" &&
@@ -13,9 +14,7 @@ function isBoxScoreSummary(m: unknown): m is BoxScoreSummary {
       typeof obj.week === "number" &&
       typeof obj.season === "number" &&
       typeof obj.total_points === "number" &&
-      typeof obj.zero_starts_count === "number" &&
-      typeof obj.has_zero_start === "boolean" &&
-      typeof obj.has_missed_opportunity === "boolean"
+      (obj.has_missed_opportunity === undefined || typeof obj.has_missed_opportunity === "boolean")
     );
   }
 
@@ -24,7 +23,7 @@ export async function getBoxScoreSummaries(
 ): Promise<BoxScoreSummary[]> {
   const res = await index.query({
     vector: new Array(1536).fill(0),
-    topK: 550,
+    topK: 1000,
     includeMetadata: true,
     filter: {
       type: "box_scores_summary",
@@ -37,6 +36,8 @@ export async function getBoxScoreSummaries(
   for (const match of res.matches ?? []) {
     if (isBoxScoreSummary(match.metadata)) {
       boxScores.push(match.metadata);
+    } else {
+      console.log(`⚠️ Record failed validation: Week ${match.metadata?.week}, Owner: ${match.metadata?.owner}`);
     }
   }
 

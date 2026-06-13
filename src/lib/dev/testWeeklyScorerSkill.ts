@@ -12,15 +12,23 @@ async function run() {
     for (const week of sortedWeeks) {
       const rankings = allWeeklyRankings.get(week)!;
       
-      // Since our function already handles the sorting, index 0 is 1st place
-      const best = rankings[0];
-      // The last element in the array is the lowest score
-      const worst = rankings[rankings.length - 1];
-
-      console.log(`📅 WEEK ${week}: (${rankings.length} teams processed)`);
-      console.log(`   🏆 Top Scorer:  ${best.owner} (${best.team}) - ${best.totalPoints} pts`);
-      console.log(`   💀 Worst Scorer: ${worst.owner} (${worst.team}) - ${worst.totalPoints} pts`);
+      console.log(`📅 WEEK ${week} (${rankings.length} teams processed):`);
       console.log("   ------------------------------------------------------------");
+
+      // Loop through every single ranked player for this week
+      rankings.forEach((player) => {
+        // Formats the rank prefix (e.g., "1st:", "2nd:", "10th:")
+        const rankSuffix = player.rank === 1 ? "st" : player.rank === 2 ? "nd" : player.rank === 3 ? "rd" : "th";
+        const rankStr = `${player.rank}${rankSuffix}:`.padEnd(5, " ");
+        
+        // Padded owner and team names to keep the terminal looking neat
+        const ownerStr = `${player.owner}`.padEnd(25, " ");
+        const teamStr = `(${player.team})`.padEnd(40, " ");
+        
+        console.log(`   👉 ${rankStr} ${ownerStr} ${teamStr} -> ${player.totalPoints} pts`);
+      });
+
+      console.log("   ------------------------------------------------------------\n");
     }
 
   } catch (err) {
