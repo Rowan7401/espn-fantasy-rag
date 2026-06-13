@@ -26,6 +26,7 @@ async function run() {
         const teamStr = `(${player.team})`.padEnd(40, " ");
         
         console.log(`   👉 ${rankStr} ${ownerStr} ${teamStr} -> ${player.totalPoints} pts`);
+        console.log(`      ⚡ Top Performer Data -> Name: ${player.topPlayerName} | Floor Pts: ${player.topPlayerFloorPts}`);
       });
 
       console.log("   ------------------------------------------------------------\n");
