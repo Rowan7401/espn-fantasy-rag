@@ -6,7 +6,8 @@ const openai = new OpenAI({ apiKey: CONFIG.OPENAI_API_KEY });
 const pc = new Pinecone({ apiKey: CONFIG.PINECONE_API_KEY });
 const index = pc.index("fantasy-football");
 
-export async function getContext(query: string) {
+// Adjust your return type to give the route everything it needs
+export async function getContext(query: string): Promise<{ contextText: string; intent: string }> {
   console.log("🔎 getContext() called with query:", query);
 
   // 1. Intent detection
@@ -23,9 +24,6 @@ export async function getContext(query: string) {
 
   const vector = embeddingResponse.data[0].embedding;
 
-  console.log("Generated embedding vector length:", vector.length);
-  console.log("🔥 FINAL topK being used:", topK);
-
   // 3. Query Pinecone with dynamic topK
   const queryResponse = await index.query({
     vector,
@@ -33,15 +31,12 @@ export async function getContext(query: string) {
     includeMetadata: true,
   });
 
-  console.log("Pinecone matches:", queryResponse.matches?.length);
-
   // 4. Build context
   const contextText = queryResponse.matches
     ?.map(match => match.metadata?.text)
     .filter(Boolean)
-    .join("\n---\n");
+    .join("\n---\n") || "";
 
-  console.log("Context text assembled:", contextText);
-
-  return contextText;
+  // Return both items back to the API route handler
+  return { contextText, intent };
 }
