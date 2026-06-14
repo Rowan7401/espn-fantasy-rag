@@ -49,7 +49,7 @@ export async function POST(req: Request) {
           description: "Calculates league leaderboards, total points, scores, and best-performing players for owners / managers on a week-by-week basis.",
           parameters: z.object({
             season: z.number().default(2025),
-            targetWeek: z.number().describe("Specific week to isolate (e.g., Week 4).").optional()
+            targetWeek: z.number().optional().describe("Specific week to isolate (e.g., Week 4).")
           }),
           execute: async ({ season, targetWeek }) => {
             const data = await getWeeklyRankingsAndAwards(season);
@@ -59,10 +59,10 @@ export async function POST(req: Request) {
         },
 
         getBadBenchingRankings: {
-          description: "Ranks league managers based on who left the most points off the board, sitting impactful players their bench instead of starting them (missed opportunities/lineup mistakes).",
+          description: "Ranks league owners / managers based on who left the most points off the board, sitting impactful players their bench instead of starting them (missed opportunities/lineup mistakes). Use 'desc' for worst managers (most benched points), 'asc' for optimal managers.",
           parameters: z.object({
             season: z.number().default(2025),
-            order: z.enum(["asc", "desc"]).describe("Use 'desc' for worst managers (most benched points), 'asc' for optimal managers.").default("desc")
+            order: z.enum(["asc", "desc"]).default("desc")
           }),
           execute: async ({ season, order }) => {
             return { leaderboard: await getTotalMissedOpportunities(season, order) };
@@ -70,12 +70,12 @@ export async function POST(req: Request) {
         },
 
         getPlayerScorerRankings: {
-          description: "Retrieves a specific NFL player and their season total points scored. The skill retrieves by rank (1 = 1st best, 2 = 2nd, 3 = 3rd, etc...) and includes an optional player position filter (Best scoring WR, RB, QB, etc...).",
+          description: "Retrieves a specific NFL player and their season total points scored. Use 'desc' for top scorers, 'asc' for lowest scorers. The skill retrieves by rank (1 = 1st best, 2 = 2nd, 3 = 3rd, etc...) and includes an optional player position filter (Best scoring WR, RB, QB, etc...).",
           parameters: z.object({
-            n: z.number().describe("The rank index to retrieve. e.g. 1 for the highest scorer, 2 for the second highest.").default(1),
-            order: z.enum(["asc", "desc"]).describe("Use 'desc' for top scorers, 'asc' for lowest scorers.").default("desc"),
+            n: z.number().default(1),
+            order: z.enum(["asc", "desc"]).default("desc"),
             season: z.number().default(2025),
-            position: z.string().describe("Optional position filter like 'QB', 'RB', 'WR', 'TE', 'D/ST', 'K'.").optional()
+            position: z.string().optional().describe("Optional position filter like 'QB', 'RB', 'WR', 'TE'.")
           }),
           execute: async ({ n, order, season, position }) => {
             const filter = position ? { position } : undefined;
@@ -85,12 +85,12 @@ export async function POST(req: Request) {
         },
 
         getValueRatioRankings: {
-          description: "Retrieves a specific ranked NFL player based on how much they exceeded or missed their pre-season projections (Value Ratio). Ratios above 1 indicate a player exceeded expectactions, while being below 1 is a disappointing season. Optional player position filter is available to help with more specific queries as well (QB, TE, D/ST).",
+          description: "Retrieves a specific ranked NFL player based on how much they exceeded or missed their pre-season projections (Value Ratio). Ratios above 1 indicate a player exceeded expectactions, while being below 1 is a disappointing season. Use n: The rank index to fetch. Use 'desc' for draft steals, 'asc' for major draft busts. 1 for the ultimate value/steal OR bust, 2 for the next best OR next largest bust. There is also an optional player position filter available to help with more specific queries as well (QB, TE, D/ST).",
           parameters: z.object({
-            n: z.number().describe("The rank index to fetch. 1 for the ultimate value/steal or bust depending on ordering, 2 for the next best or next largest bust.").default(1),
-            order: z.enum(["asc", "desc"]).describe("Use 'desc' for draft steals, 'asc' for major draft busts.").default("desc"),
+            n: z.number().default(1),
+            order: z.enum(["asc", "desc"]).default("desc"),
             season: z.number().default(2025),
-            position: z.string().describe("Optional position filter like 'QB', 'RB', 'WR', 'TE', 'D/ST', 'K'.").optional()
+            position: z.string().optional().describe("Optional position filter like 'QB', 'RB', 'WR', 'TE'.")
           }),
           execute: async ({ n, order, season, position }) => {
             const filter = position ? { position } : undefined;
@@ -100,10 +100,10 @@ export async function POST(req: Request) {
         },
 
         getPunchingBagRankings: {
-          description: "Retrieves a specific ranked owner / manager by calculating who had the most total points scored AGAINST them by opponents over the season (unlucky vs lucky matchups).",
+          description: "Retrieves a specific ranked owner / manager by calculating who had the most total points scored AGAINST them by opponents over the season (unlucky vs lucky matchups). (1 = most unlucky punching bag). Use 'desc' for most points against (unlucky). Use 'asc' for fewest points against (lucky)..",
           parameters: z.object({
-            n: z.number().describe("The rank index to fetch. 1 for the absolute most unlucky punching bag owner / manager.").default(1),
-            order: z.enum(["asc", "desc"]).describe("Use 'desc' for most points against (unlucky), 'asc' for fewest points against (lucky).").default("desc"),
+            n: z.number().default(1),
+            order: z.enum(["asc", "desc"]).default("desc"),
             season: z.number().default(2025)
           }),
           execute: async ({ n, order, season }) => {
@@ -113,10 +113,10 @@ export async function POST(req: Request) {
         },
 
         getManagerWinLossRecords: {
-          description: "Retrieves a specific ranked owner / manager by their basic standings: total wins, losses, and win percentages.",
+          description: "Retrieves a specific ranked manager by wins, losses, and percentages. (1 = league champion/best record). Use 'desc' to count down from first place.",
           parameters: z.object({
-            n: z.number().describe("The standing rank to pull. 1 for 1st place / league's best record, 2 for second place.").default(1),
-            order: z.enum(["asc", "desc"]).describe("Use 'desc' to count down from first place, 'asc' to count up from last place.").default("desc"),
+            n: z.number().default(1),
+            order: z.enum(["asc", "desc"]).default("desc"),
             season: z.number().default(2025)
           }),
           execute: async ({ n, order, season }) => {
@@ -126,10 +126,10 @@ export async function POST(req: Request) {
         },
 
         getTeamScorerRankings: {
-          description: "Retrieves a specific ranked manager by their total points scored ('Points For') across the entire duration of the season.",
+          description: "Retrieves a specific ranked manager by total points scored 'Points For' (1 = highest powerhouse squad). Use 'desc' for highest point totals.",
           parameters: z.object({
-            n: z.number().describe("The scoring rank to look up. 1 for the highest scoring powerhouse squad.").default(1),
-            order: z.enum(["asc", "desc"]).describe("Use 'desc' for highest point totals, 'asc' for the lowest scoring squads.").default("desc"),
+            n: z.number().default(1),
+            order: z.enum(["asc", "desc"]).default("desc"),
             season: z.number().default(2025)
           }),
           execute: async ({ n, order, season }) => {
