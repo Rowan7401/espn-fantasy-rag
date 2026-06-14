@@ -12,17 +12,22 @@ export function sortTeamByWins(
   });
 }
 
-export async function getNthBestRankingTeam(
-    n: number,
-    season: number = 2025
-  ) {
-    const teams = await getTeamSummaries(season);
-  
-    const sorted = sortTeamByWins(teams, "desc");
-  
-    if (n < 1 || n > sorted.length) {
-      throw new Error("Invalid rank requested");
-    }
-  
-    return sorted[n - 1]; 
+export async function getNthBestRankingTeam({
+  n,
+  order = "desc", 
+  season = 2025
+}: {
+  n: number;
+  order?: "asc" | "desc";
+  season?: number;
+}) {
+  const teams = await getTeamSummaries(season);
+
+  const sorted = sortTeamByWins(teams, order);
+
+  if (n < 1 || n > sorted.length) {
+    throw new Error(`Invalid rank requested. Total teams available: ${sorted.length}`);
   }
+
+  return sorted[n - 1]; 
+}
