@@ -3,14 +3,13 @@ import { streamText, convertToModelMessages } from "ai";
 import { getContext } from "@/lib/rag/context";
 import { z } from "zod";
 
-// Import analytical skills
 import { getTotalMissedOpportunities } from "@/lib/skills/league/getBadBenchingOwnerRank";
 import { getWeeklyRankingsAndAwards } from "@/lib/skills/league/getWeeklyPtsRank";
-import { sortPlayerByScoring } from "@/lib/skills/player/getPlayerScorerRank";
-import { sortPlayerByValueRatio } from "@/lib/skills/player/getValueRatioRank";
-import { sortTeamForPunchingBag } from "@/lib/skills/team/getPunchingBagRankings";
-import { sortTeamByWins } from "@/lib/skills/team/getRecordRankings";
-import { sortTeamByScoring } from "@/lib/skills/team/getScorerRankings";
+import { getNthScoringPlayer } from "@/lib/skills/player/getPlayerScorerRank";
+import { getNthValueRatioPlayer } from "@/lib/skills/player/getValueRatioRank";
+import { getNthPunchingBagTeam } from "@/lib/skills/team/getPunchingBagRankings";
+import { getNthBestRankingTeam } from "@/lib/skills/team/getRecordRankings";
+import { getNthBestScoringTeam } from "@/lib/skills/team/getScorerRankings";
 
 export async function POST(req: Request) {
   try {
@@ -18,7 +17,7 @@ export async function POST(req: Request) {
     const { messages } = await req.json();
     const lastMessage = messages[messages.length - 1]?.parts?.[0]?.text ?? "";
 
-    // Unpack everything safely in one simple, asynchronous step
+    // Unpack context text and structural classification intent cleanly
     const { contextText, intent } = await getContext(lastMessage);
     const modelMessages = await convertToModelMessages(messages);
 
@@ -31,25 +30,26 @@ export async function POST(req: Request) {
         
         CRITICAL TOOL USE INSTRUCTIONS:
         - If the intent is [WEEKLY] or [RANKING], check your analytical tools before trusting text context chunks.
-        - If the intent is [UNKNOWN], politely guide the conversation back to the fantasy football league statistics.
+        - If the intent is [UNKNOWN], joke about the user's unrelated question. Offer to bring the conversation back to the fantasy football league statistics.
 
-        Use ONLY the provided league data. 
-        ...
+        Use ONLY the provided league data. When interpreting tool results or raw data:
+        - Justify your answer with cold hard numbers.
+        - Never mention metadata variable names or code terms, just real stats.
+        - Be succinct (3-5 sentences).
+        - Avoid citing team names in responses. Name the owners / managers of teams instead.
         
         Fallback Semantic Context:
         ${contextText}
       `,
       messages: modelMessages,
       maxSteps: 2, // Crucial: allows the model to process tool results before replying
-      
-      // 2. Clear, distinct English instructions for the model's router
+
       tools: {
-        
         getWeeklyRankings: {
-          description: "Calculates league leaderboards, total points, scores, and best-performing players for managers on a week-by-week basis.",
+          description: "Calculates league leaderboards, total points, scores, and best-performing players for owners / managers on a week-by-week basis.",
           parameters: z.object({
             season: z.number().default(2025),
-            targetWeek: z.number().optional().description("Specific week to isolate (e.g., Week 4).")
+            targetWeek: z.number().describe("Specific week to isolate (e.g., Week 4).").optional()
           }),
           execute: async ({ season, targetWeek }) => {
             const data = await getWeeklyRankingsAndAwards(season);
@@ -59,10 +59,10 @@ export async function POST(req: Request) {
         },
 
         getBadBenchingRankings: {
-          description: "Ranks league managers based on who left the most points sitting on their bench instead of starting them (missed opportunities/lineup mistakes).",
+          description: "Ranks league managers based on who left the most points off the board, sitting impactful players their bench instead of starting them (missed opportunities/lineup mistakes).",
           parameters: z.object({
             season: z.number().default(2025),
-            order: z.enum(["asc", "desc"]).default("desc").description("Use 'desc' for worst managers (most benched points), 'asc' for optimal managers.")
+            order: z.enum(["asc", "desc"]).describe("Use 'desc' for worst managers (most benched points), 'asc' for optimal managers.").default("desc")
           }),
           execute: async ({ season, order }) => {
             return { leaderboard: await getTotalMissedOpportunities(season, order) };
@@ -70,45 +70,73 @@ export async function POST(req: Request) {
         },
 
         getPlayerScorerRankings: {
-          description: "Ranks individual NFL football players by their total fantasy point production over the course of the entire season.",
-          parameters: z.object({ season: z.number().default(2025) }),
-          execute: async ({ season }) => {
-            return { players: await sortPlayerByScoring(season) };
+          description: "Retrieves a specific NFL player and their season total points scored. The skill retrieves by rank (1 = 1st best, 2 = 2nd, 3 = 3rd, etc...) and includes an optional player position filter (Best scoring WR, RB, QB, etc...).",
+          parameters: z.object({
+            n: z.number().describe("The rank index to retrieve. e.g. 1 for the highest scorer, 2 for the second highest.").default(1),
+            order: z.enum(["asc", "desc"]).describe("Use 'desc' for top scorers, 'asc' for lowest scorers.").default("desc"),
+            season: z.number().default(2025),
+            position: z.string().describe("Optional position filter like 'QB', 'RB', 'WR', 'TE', 'D/ST', 'K'.").optional()
+          }),
+          execute: async ({ n, order, season, position }) => {
+            const filter = position ? { position } : undefined;
+            const player = await getNthScoringPlayer({ n, order, season, filter });
+            return { rank: n, player };
           }
         },
 
         getValueRatioRankings: {
-          description: "Ranks NFL football players by how much they exceeded or missed their pre-season expectations using a value ratio. A ratio above 1.0 means a draft steal / breakout star. Below 1.0 means a major draft bust.",
-          parameters: z.object({ season: z.number().default(2025) }),
-          execute: async ({ season }) => {
-            return { rankings: await sortPlayerByValueRatio(season) };
+          description: "Retrieves a specific ranked NFL player based on how much they exceeded or missed their pre-season projections (Value Ratio). Ratios above 1 indicate a player exceeded expectactions, while being below 1 is a disappointing season. Optional player position filter is available to help with more specific queries as well (QB, TE, D/ST).",
+          parameters: z.object({
+            n: z.number().describe("The rank index to fetch. 1 for the ultimate value/steal or bust depending on ordering, 2 for the next best or next largest bust.").default(1),
+            order: z.enum(["asc", "desc"]).describe("Use 'desc' for draft steals, 'asc' for major draft busts.").default("desc"),
+            season: z.number().default(2025),
+            position: z.string().describe("Optional position filter like 'QB', 'RB', 'WR', 'TE', 'D/ST', 'K'.").optional()
+          }),
+          execute: async ({ n, order, season, position }) => {
+            const filter = position ? { position } : undefined;
+            const player = await getNthValueRatioPlayer({ n, order, season, filter });
+            return { rank: n, player };
           }
         },
 
         getPunchingBagRankings: {
-          description: "Ranks the most unlucky managers by calculating who had the most total points scored AGAINST them by opponents over the season.",
-          parameters: z.object({ season: z.number().default(2025) }),
-          execute: async ({ season }) => {
-            return { leaders: await sortTeamForPunchingBag(season) };
+          description: "Retrieves a specific ranked owner / manager by calculating who had the most total points scored AGAINST them by opponents over the season (unlucky vs lucky matchups).",
+          parameters: z.object({
+            n: z.number().describe("The rank index to fetch. 1 for the absolute most unlucky punching bag owner / manager.").default(1),
+            order: z.enum(["asc", "desc"]).describe("Use 'desc' for most points against (unlucky), 'asc' for fewest points against (lucky).").default("desc"),
+            season: z.number().default(2025)
+          }),
+          execute: async ({ n, order, season }) => {
+            const team = await getNthPunchingBagTeam({ n, order, season });
+            return { rank: n, team };
           }
         },
 
         getManagerWinLossRecords: {
-          description: "Ranks league managers by their basic standings: total wins, losses, win percentages, and overall league table ranking.",
-          parameters: z.object({ season: z.number().default(2025) }),
-          execute: async ({ season }) => {
-            return { standings: await sortTeamByWins(season) };
+          description: "Retrieves a specific ranked owner / manager by their basic standings: total wins, losses, and win percentages.",
+          parameters: z.object({
+            n: z.number().describe("The standing rank to pull. 1 for 1st place / league's best record, 2 for second place.").default(1),
+            order: z.enum(["asc", "desc"]).describe("Use 'desc' to count down from first place, 'asc' to count up from last place.").default("desc"),
+            season: z.number().default(2025)
+          }),
+          execute: async ({ n, order, season }) => {
+            const team = await getNthBestRankingTeam({ n, order, season });
+            return { standingRank: n, team };
           }
         },
 
         getTeamScorerRankings: {
-          description: "Ranks league managers by their total points scored ('Points For') across the entire duration of the season.",
-          parameters: z.object({ season: z.number().default(2025) }),
-          execute: async ({ season }) => {
-            return { scores: await sortTeamByScoring(season) };
+          description: "Retrieves a specific ranked manager by their total points scored ('Points For') across the entire duration of the season.",
+          parameters: z.object({
+            n: z.number().describe("The scoring rank to look up. 1 for the highest scoring powerhouse squad.").default(1),
+            order: z.enum(["asc", "desc"]).describe("Use 'desc' for highest point totals, 'asc' for the lowest scoring squads.").default("desc"),
+            season: z.number().default(2025)
+          }),
+          execute: async ({ n, order, season }) => {
+            const team = await getNthBestScoringTeam({ n, order, season });
+            return { scoringRank: n, team };
           }
         }
-
       }
     });
 
