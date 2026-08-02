@@ -10,9 +10,6 @@ const PlayerScoringSchema = z.object({
   position: z
     .enum(["QB", "RB", "WR", "TE", "K", "D/ST"])
     .optional()
-    .describe(
-      "Filter players by NFL position abbreviations (QB, RB, WR, TE, K, D/ST).",
-    ),
 });
 
 export const playerRankingsTool = tool({
