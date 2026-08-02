@@ -1,86 +1,78 @@
 import { openai } from "@ai-sdk/openai";
-import { streamText, convertToModelMessages } from "ai";
+import { streamText, convertToModelMessages, stepCountIs } from "ai";
 import { getContext } from "@/lib/rag/context";
+
+import { weeklyRankingsTool } from "@/lib/skills/league/getWeeklyRankingsTool";
+import { playerRankingsTool } from "@/lib/skills/player/getPlayerRankingsTool";
+import { valueRankingsTool } from "@/lib/skills/player/getValueRankingsTool";
+import { punchingBagTool } from "@/lib/skills/team/getPunchingBagTool";
+import { getTeamScorerRankingsTool } from "@/lib/skills/team/getTeamScorerRankingsTool";
+import { badBenchRankingTool } from "@/lib/skills/league/getManagerRankingTool";
+import { teamRecordsTool } from "@/lib/skills/team/getTeamRecordsTool";
 
 export async function POST(req: Request) {
   try {
     console.log("📩 /api/chat endpoint hit");
-
     const { messages } = await req.json();
-
-    console.log("Incoming messages:", messages);
-
     const lastMessage = messages[messages.length - 1]?.parts?.[0]?.text ?? "";
 
-    console.log("User question:", lastMessage);
-
-    // Fetch RAG context
-    const context = await getContext(lastMessage);
-
-    console.log("Retrieved RAG context:", context);
-
+    // Unpack context text and structural classification intent cleanly
+    const { contextText, intent } = await getContext(lastMessage);
     const modelMessages = await convertToModelMessages(messages);
 
-    //  Core Stream logic
     const result = streamText({
       model: openai("gpt-4o-mini"),
       system: `
-        You are League Insider AI, an expert analyst for this fantasy football league.
+        You are League Insider AI, a fantasy football analytics engine for a private league.
 
-        Use ONLY the provided league data. You have various chunks of data you can use for accurate analysis.
+        You answer questions using ONLY tool outputs and provided league context. Do not guess or hallucinate stats.
 
-        They are idenitified by Pinecone's DB metadata within records. 'type' is the key and the values include: 
-        team_summary: Simple summary of the league's teams including their total amount of wins and losses and totals of points for and against.
-        You can use this to identify who the best team was (most wins). Also even the most unlucky owner (most points scored against)
-         and best scorer (team with most points for).
+        INTENT CLASSIFICATION:
+        - RANKING: season-long comparisons (best/worst managers, players, records, value)
+        - WEEKLY: week-specific outcomes and performance
+        - ANALYTICS: inefficiency, luck, bench decisions, projections
+        - UNKNOWN: unrelated questions (respond briefly, humorous redirect back to fantasy football)
 
-        box_scores_summary: This chunk of records highlights the teams week by week performance. It calls out the top 3 high scorers on one's team
-         and also the worst performer or lowest scorer. It also identifies negligent owners who started players who scored 0 points
-         and/or also failed to start players who performed well scoring over 15pts. This could be helpful to figure out who the best and worst owners are based on
-         how they managed their players, if they left high scorers on the bench, and if they consistently had high scorers.
+        TOOL USAGE RULES:
+        - ALWAYS use tools when available for RANKING, WEEKLY, or ANALYTICS intent.
+        - Never rely on contextText alone if a tool exists that can answer the question.
+        - If multiple tools could apply, choose the most specific one.
 
-        fantasy_draft_pick: This is just a chunk of records which go through every draft pick from the draft. This could be helpful to analyze owners
-         draft strategy. Basically, who picked what position when? Did a user pick QB's in the earlier rounds or did they save it for later?
+        RESPONSE RULES:
+        - Be concise (3–5 sentences max).
+        - Use only real numbers from tool results.
+        - **IMPORTANT** Refer to managers by their real name only. DO NOT use their team names. They are slightly explicit and offensive.
+        - Do not mention tool names, schemas, or internal logic.
+        - Always justify conclusions using statistics.
+        - Make jokes and jabs towards managers / owners when appropriate. 
+        - For remarkable statistics about NFL players, make comedic observations / comments if relevant.
+        - Never attempt to utilize tools to answer questions that are not related to fantasy football or the league. Politely redirect the conversation back to fantasy football.
 
-        expectation_vs_reality: This is an interesting chunk of records which emphasizes how players were projected to perform before the start of the season
-         vs. how they actually played by the end of the season. Each record has the the projected and actual results of the season going player by player.
-         It even includes helpful metadata piece "value_ratio" where a ratio above 1.0 means that the player exceeded projections while one below 1.0 means
-         a disappointing year based on failing to meet expectations.
+        DATA SOURCES:
+        - tool results are authoritative
+        - contextText is fallback-only when no tool applies
 
-        matchup_recap: This chunk is really simple and just points out week by week, which teams won against who, and what were the point totals.
-         These records would be helpful to see who went on long winstreaks or losing streaks as you could see week by week trends.
-         You also could use these to see who was the most unlucky or nail biting loser, calculating who lost by the smallest margin.
-
-        player_season_stats: This chunk is a super rich data source. It goes player by player, identifying who their owner was that year
-         and has many important stats as metadata. These include touchdowns, rushing yards, receiving yards, and more. All great statistics to answer
-         questions about the best and worst players of the league. It also includes niche stats like YAC (yards after catch) and just is an overall great
-         source to generate questions and answers for interesting league trivia.
-
-
-        When analyzing keep all these chunks as your only truthful data source.
-
-        For subjective questions (not direct, explicit questions)
-        - Justify your answer with data
-        - Mention specific stats and comparisons you used to create your response
-        - Don't mention the metadata variable names, just the real stats and info you obtained
-
-
-        If the data is insufficient, say so.
-        Be relatively succint in your responses. 
-        Answer in 3-4 sentences.
-
-        Never invent league information.
-        ${context}
-      `,
-      // Helpers to ensure message format compatibility
+        CURRENT INTENT: ${intent.toUpperCase()}
+        `,
       messages: modelMessages,
+
+      tools: {
+        weeklyRankingsTool,
+        badBenchRankingTool,
+        playerRankingsTool,
+        valueRankingsTool,
+        punchingBagTool,
+        teamRecordsTool,
+        getTeamScorerRankingsTool, 
+      },
+
+      stopWhen: stepCountIs(2)
+
     });
 
     console.log("Streaming response back to client");
-
     return result.toUIMessageStreamResponse();
-  }
-  catch (err) {
+  } catch (err) {
     console.error("❌ Chat route error:", err);
     throw err;
   }

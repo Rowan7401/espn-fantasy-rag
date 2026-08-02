@@ -2,20 +2,32 @@ import { Pinecone } from '@pinecone-database/pinecone';
 import OpenAI from 'openai';
 import { CONFIG } from '../../config';
 import { detectIntent, getRetrievalConfig, logIntent } from '../clients/intent';
+
 const openai = new OpenAI({ apiKey: CONFIG.OPENAI_API_KEY });
 const pc = new Pinecone({ apiKey: CONFIG.PINECONE_API_KEY });
 const index = pc.index("fantasy-football");
 
-export async function getContext(query: string) {
+export async function getContext(query: string): Promise<{ contextText: string; intent: string }> {
   console.log("🔎 getContext() called with query:", query);
 
-  // 1. Intent detection
   const intent = detectIntent(query);
   const { topK } = getRetrievalConfig(intent);
 
   logIntent(query, intent, topK);
 
-  // 2. Generate embedding
+  // Build dynamic metadata filters based on the detected intent
+  const filter: Record<string, any> = {};
+
+  if (intent === "weekly") {
+    // Look for patterns like "week 4", "week 12", "w5", etc.
+    const weekMatch = query.match(/\b(?:week|w)\s*(\d{1,2})\b/i);
+    if (weekMatch) {
+      const targetWeek = parseInt(weekMatch[1], 10);
+      filter.week = targetWeek; // Isolate the week in question
+      console.log(`🎯 Weekly intent detected. Applying hard metadata filter for week: ${targetWeek}`);
+    }
+  }
+
   const embeddingResponse = await openai.embeddings.create({
     model: "text-embedding-3-small",
     input: query,
@@ -23,25 +35,20 @@ export async function getContext(query: string) {
 
   const vector = embeddingResponse.data[0].embedding;
 
-  console.log("Generated embedding vector length:", vector.length);
-  console.log("🔥 FINAL topK being used:", topK);
-
-  // 3. Query Pinecone with dynamic topK
+  // Query Pinecone with dynamic topK and metadata filters
   const queryResponse = await index.query({
     vector,
     topK,
     includeMetadata: true,
+    filter: Object.keys(filter).length > 0 ? filter : undefined, // Only pass if filter has properties
   });
 
-  console.log("Pinecone matches:", queryResponse.matches?.length);
-
-  // 4. Build context
+  // Build context
   const contextText = queryResponse.matches
     ?.map(match => match.metadata?.text)
     .filter(Boolean)
-    .join("\n---\n");
+    .join("\n---\n") || "";
 
-  console.log("Context text assembled:", contextText);
-
-  return contextText;
+  // Return both items back to the API route handler
+  return { contextText, intent };
 }
