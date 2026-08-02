@@ -1,5 +1,5 @@
 import { openai } from "@ai-sdk/openai";
-import { streamText, convertToModelMessages, tool } from "ai";
+import { streamText, convertToModelMessages, tool, stepCountIs } from "ai";
 import { getContext } from "@/lib/rag/context";
 import { z } from "zod";
 
@@ -11,45 +11,48 @@ import { getNthPunchingBagTeam } from "@/lib/skills/team/getPunchingBagRankings"
 import { getNthBestRankingTeam } from "@/lib/skills/team/getRecordRankings";
 import { getNthBestScoringTeam } from "@/lib/skills/team/getScorerRankings";
 
-export const WeeklyPerformanceSchema = z.object({
-  season: z.number().default(2025),
-  targetWeek: z.number(),
+const SEASON_STRING = "The fantasy football season year (defaults to 2025).";
+const RANK_STRING = "The requested rank.";
+
+const WeeklyPerformanceSchema = z.object({
+  season: z.number().default(2025).describe(SEASON_STRING),
+  targetWeek: z.number().describe("The week number (1–18) to return rankings for."),
 });
 
-export const ManagerEfficiencySchema = z.object({
-  season: z.number().default(2025),
+const ManagerEfficiencySchema = z.object({
+  season: z.number().default(2025).describe(SEASON_STRING),
   order: z.enum(["asc", "desc"]).default("desc"),
 });
 
-export const PlayerScoringSchema = z.object({
-  season: z.number().default(2025),
-  n: z.number().default(1),
+const PlayerScoringSchema = z.object({
+  season: z.number().default(2025).describe(SEASON_STRING),
+  n: z.number().default(1).describe(RANK_STRING),
   order: z.enum(["asc", "desc"]).default("desc"),
-  position: z.enum(["QB", "RB", "WR", "TE", "K", "D/ST"]).optional(),
+  position: z.enum(["QB", "RB", "WR", "TE", "K", "D/ST"]).optional().describe("Filter players by NFL position abbreviations (QB, RB, WR, TE, K, D/ST)."),
 });
 
-export const DraftValueSchema = z.object({
-  season: z.number().default(2025),
-  n: z.number().default(1),
+const DraftValueSchema = z.object({
+  season: z.number().default(2025).describe(SEASON_STRING),
+  n: z.number().default(1).describe(RANK_STRING),
   order: z.enum(["asc", "desc"]).default("desc"),
-  position: z.enum(["QB", "RB", "WR", "TE", "K", "DEF"]).optional(),
+  position: z.enum(["QB", "RB", "WR", "TE", "K", "DEF"]).optional().describe("Filter players by NFL position abbreviations (QB, RB, WR, TE, K, D/ST)."),
 });
 
-export const LuckScheduleSchema = z.object({
-  season: z.number().default(2025),
-  n: z.number().default(1),
-  order: z.enum(["asc", "desc"]).default("desc"),
-});
-
-export const ManagerStandingsSchema = z.object({
-  season: z.number().default(2025),
-  n: z.number().default(1),
+const LuckScheduleSchema = z.object({
+  season: z.number().default(2025).describe(SEASON_STRING),
+  n: z.number().default(1).describe(RANK_STRING),
   order: z.enum(["asc", "desc"]).default("desc"),
 });
 
-export const TotalPointsSchema = z.object({
-  season: z.number().default(2025),
-  n: z.number().default(1),
+const ManagerStandingsSchema = z.object({
+  season: z.number().default(2025).describe(SEASON_STRING),
+  n: z.number().describe(RANK_STRING),
+  order: z.enum(["asc", "desc"]),
+});
+
+const TotalPointsSchema = z.object({
+  season: z.number().default(2025).describe(SEASON_STRING),
+  n: z.number().default(1).describe(RANK_STRING),
   order: z.enum(["asc", "desc"]).default("desc"),
 });
 
@@ -98,7 +101,6 @@ export async function POST(req: Request) {
         CURRENT INTENT: ${intent.toUpperCase()}
         `,
       messages: modelMessages,
-      maxSteps: 2, // Crucial: allows the model to process tool results before replying
 
       tools: {
         getWeeklyRankings: tool({
@@ -127,60 +129,64 @@ export async function POST(req: Request) {
             - season represents the fantasy season (defaults to 2025).
             - targetWeek selects a specific week (e.g., 1–18). If omitted, returns all weekly data.
           `,
+
+          inputSchema: WeeklyPerformanceSchema,
         
-          inputExamples: [
-            {
-              description: "Who won Week 4?",
-              input: {
-                season: 2025,
-                targetWeek: 4,
-              },
-            },
-            {
-              description: "Who had the highest score in Week 7?",
-              input: {
-                season: 2025,
-                targetWeek: 7,
-              },
-            },
-            {
-              description: "Who were the top performers in Week 10?",
-              input: {
-                season: 2025,
-                targetWeek: 10,
-              },
-            },
-            {
-              description: "What were the Week 3 rankings?",
-              input: {
-                season: 2025,
-                targetWeek: 3,
-              },
-            },
-            {
-              description: "Show me Week 6 results",
-              input: {
-                season: 2025,
-                targetWeek: 6,
-              },
-            },
-            {
-              description: "Give me weekly rankings for the season",
-              input: {
-                season: 2025,
-              },
-            },
-            {
-              description: "How did managers perform across all weeks?",
-              input: {
-                season: 2025,
-              },
-            },
-          ],
+          // inputExamples: [
+          //   {
+          //     description: "Who won Week 4?",
+          //     input: {
+          //       season: 2025,
+          //       targetWeek: 4,
+          //     },
+          //   },
+          //   {
+          //     description: "Who had the highest score in Week 7?",
+          //     input: {
+          //       season: 2025,
+          //       targetWeek: 7,
+          //     },
+          //   },
+          //   {
+          //     description: "Who were the top performers in Week 10?",
+          //     input: {
+          //       season: 2025,
+          //       targetWeek: 10,
+          //     },
+          //   },
+          //   {
+          //     description: "What were the Week 3 rankings?",
+          //     input: {
+          //       season: 2025,
+          //       targetWeek: 3,
+          //     },
+          //   },
+          //   {
+          //     description: "Show me Week 6 results",
+          //     input: {
+          //       season: 2025,
+          //       targetWeek: 6,
+          //     },
+          //   },
+          //   {
+          //     description: "Give me weekly rankings for the season",
+          //     input: {
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "How did managers perform across all weeks?",
+          //     input: {
+          //       season: 2025,
+          //     },
+          //   },
+          // ],
         
           execute: async ({ season, targetWeek }) => {
+            console.log("🛠️ TOOL CALLED: getWeeklyRankings");
             const data = await getWeeklyRankingsAndAwards(season);
-        
+            
+            console.log("Arguments:", { season, targetWeek });
             if (targetWeek) {
               return {
                 type: "singleWeek",
@@ -189,11 +195,13 @@ export async function POST(req: Request) {
                 result: data.get(targetWeek) ?? [],
               };
             }
-        
+            
+            const resultObject = Object.fromEntries(data);
+            console.log("📤 TOOL RESULT:", resultObject);
             return {
               type: "fullSeason",
               season,
-              result: Object.fromEntries(data),
+              result: resultObject,
             };
           },
         }),
@@ -222,58 +230,65 @@ export async function POST(req: Request) {
             - Use order = "asc" for fewest missed bench points (best lineup management / most optimal decisions).
             - Season defaults to 2025 unless the user specifies another season.
           `,
+
+          inputSchema: ManagerEfficiencySchema, 
         
-          inputExamples: [
-            {
-              description: "Who left the most points on their bench?",
-              input: {
-                season: 2025,
-                order: "desc",
-              },
-            },
-            {
-              description: "Who made the worst lineup decisions?",
-              input: {
-                season: 2025,
-                order: "desc",
-              },
-            },
-            {
-              description: "Who is the worst manager?",
-              input: {
-                season: 2025,
-                order: "desc",
-              },
-            },
-            {
-              description: "Who wasted the most fantasy points?",
-              input: {
-                season: 2025,
-                order: "desc",
-              },
-            },
-            {
-              description: "Who is the most optimal manager?",
-              input: {
-                season: 2025,
-                order: "asc",
-              },
-            },
-            {
-              description: "Who left the fewest points on the bench?",
-              input: {
-                season: 2025,
-                order: "asc",
-              },
-            },
-          ],
+          // inputExamples: [
+          //   {
+          //     description: "Who left the most points on their bench?",
+          //     input: {
+          //       season: 2025,
+          //       order: "desc",
+          //     } satisfies z.infer<typeof ManagerEfficiencySchema>,
+          //   },
+          //   {
+          //     description: "Who made the worst lineup decisions?",
+          //     input: {
+          //       season: 2025,
+          //       order: "desc",
+          //     },
+          //   },
+          //   {
+          //     description: "Who is the worst manager?",
+          //     input: {
+          //       season: 2025,
+          //       order: "desc",
+          //     },
+          //   },
+          //   {
+          //     description: "Who wasted the most fantasy points?",
+          //     input: {
+          //       season: 2025,
+          //       order: "desc",
+          //     },
+          //   },
+          //   {
+          //     description: "Who is the most optimal manager?",
+          //     input: {
+          //       season: 2025,
+          //       order: "asc",
+          //     },
+          //   },
+          //   {
+          //     description: "Who left the fewest points on the bench?",
+          //     input: {
+          //       season: 2025,
+          //       order: "asc",
+          //     },
+          //   },
+          // ],
         
           execute: async ({ season, order }) => {
+            console.log("🛠️ TOOL CALLED: getBadBenchingRankings");
+            console.log("Arguments:", { season, order });
+            const resultObject = await getTotalMissedOpportunities(season, order);
+            console.log("📤 TOOL RESULT:", resultObject);
+
             return {
               rankType: "missedBenchPoints",
               season,
               order,
-              result: await getTotalMissedOpportunities(season, order),
+              result: resultObject,
             };
           },
         }),
@@ -303,84 +318,90 @@ export async function POST(req: Request) {
             - Position is optional and filters players by NFL position (QB, RB, WR, TE, D/ST).
             - Season defaults to 2025 unless otherwise specified.
           `,
+
+          inputSchema: PlayerScoringSchema,
         
-          inputExamples: [
-            {
-              description: "Who scored the most fantasy points?",
-              input: {
-                n: 1,
-                order: "desc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who is the highest scoring player?",
-              input: {
-                n: 1,
-                order: "desc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who is the second highest scoring player?",
-              input: {
-                n: 2,
-                order: "desc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who is the third best QB scorer?",
-              input: {
-                n: 3,
-                order: "desc",
-                season: 2025,
-                position: "QB",
-              },
-            },
-            {
-              description: "Who are the top RB scorers?",
-              input: {
-                n: 1,
-                order: "desc",
-                season: 2025,
-                position: "RB",
-              },
-            },
-            {
-              description: "Who scored the fewest fantasy points?",
-              input: {
-                n: 1,
-                order: "asc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who is the lowest scoring WR?",
-              input: {
-                n: 1,
-                order: "asc",
-                season: 2025,
-                position: "WR",
-              },
-            },
-          ],
+          // inputExamples: [
+          //   {
+          //     description: "Who scored the most fantasy points?",
+          //     input: {
+          //       n: 1,
+          //       order: "desc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who is the highest scoring player?",
+          //     input: {
+          //       n: 1,
+          //       order: "desc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who is the second highest scoring player?",
+          //     input: {
+          //       n: 2,
+          //       order: "desc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who is the third best QB scorer?",
+          //     input: {
+          //       n: 3,
+          //       order: "desc",
+          //       season: 2025,
+          //       position: "QB",
+          //     },
+          //   },
+          //   {
+          //     description: "Who are the top RB scorers?",
+          //     input: {
+          //       n: 1,
+          //       order: "desc",
+          //       season: 2025,
+          //       position: "RB",
+          //     },
+          //   },
+          //   {
+          //     description: "Who scored the fewest fantasy points?",
+          //     input: {
+          //       n: 1,
+          //       order: "asc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who is the lowest scoring WR?",
+          //     input: {
+          //       n: 1,
+          //       order: "asc",
+          //       season: 2025,
+          //       position: "WR",
+          //     },
+          //   },
+          // ],
 
           execute: async ({ n, order, season, position }) => {
+            console.log("🛠️ TOOL CALLED: getPlayerScorerRankings");
             const filter = position ? { position } : undefined;
         
-            const player = await getNthScoringPlayer({
+            const playerObject = await getNthScoringPlayer({
               n,
               order,
               season,
               filter,
             });
         
+            
+            console.log("Arguments:", { n, order, season, position });
+            console.log("📤 TOOL RESULT:", playerObject);
             return {
               rank: n,
               order,
               season,
-              result: player,
+              result: playerObject,
             };
           },
         }),
@@ -413,82 +434,87 @@ export async function POST(req: Request) {
             - Season defaults to 2025 unless the user specifies another season.
           `,
         
-          inputExamples: [
-            {
-              description: "Who were the biggest draft steals?",
-              input: {
-                n: 1,
-                order: "desc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who were the biggest draft busts?",
-              input: {
-                n: 1,
-                order: "asc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who was the best value player this season?",
-              input: {
-                n: 1,
-                order: "desc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who underperformed the most?",
-              input: {
-                n: 1,
-                order: "asc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who was the second biggest draft steal?",
-              input: {
-                n: 2,
-                order: "desc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who was the biggest QB bust?",
-              input: {
-                n: 1,
-                order: "asc",
-                season: 2025,
-                position: "QB",
-              },
-            },
-            {
-              description: "Who was the best WR value pick?",
-              input: {
-                n: 1,
-                order: "desc",
-                season: 2025,
-                position: "WR",
-              },
-            },
-          ],
+          inputSchema: DraftValueSchema,
+          
+          // inputExamples: [
+          //   {
+          //     description: "Who were the biggest draft steals?",
+          //     input: {
+          //       n: 1,
+          //       order: "desc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who were the biggest draft busts?",
+          //     input: {
+          //       n: 1,
+          //       order: "asc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who was the best value player this season?",
+          //     input: {
+          //       n: 1,
+          //       order: "desc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who underperformed the most?",
+          //     input: {
+          //       n: 1,
+          //       order: "asc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who was the second biggest draft steal?",
+          //     input: {
+          //       n: 2,
+          //       order: "desc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who was the biggest QB bust?",
+          //     input: {
+          //       n: 1,
+          //       order: "asc",
+          //       season: 2025,
+          //       position: "QB",
+          //     },
+          //   },
+          //   {
+          //     description: "Who was the best WR value pick?",
+          //     input: {
+          //       n: 1,
+          //       order: "desc",
+          //       season: 2025,
+          //       position: "WR",
+          //     },
+          //   },
+          // ],
         
           execute: async ({ n, order, season, position }) => {
+            console.log("🛠️ TOOL CALLED: getValueRatioRankings");
+            console.log("Arguments:", { n, order, season, position });
             const filter = position ? { position } : undefined;
         
-            const player = await getNthValueRatioPlayer({
+            const playerObject = await getNthValueRatioPlayer({
               n,
               order,
               season,
               filter,
             });
-        
+
+            console.log("📤 TOOL RESULT:", playerObject);
             return {
               rank: n,
               order,
               season,
-              result: player,
+              result: playerObject,
             };
           },
         }),
@@ -515,66 +541,72 @@ export async function POST(req: Request) {
             - Use order = "asc" for fewest points against (lucky, easiest schedule, least scored against).
             - Season defaults to 2025 unless the user specifies another season.
           `,
+
+          inputSchema: LuckScheduleSchema,
         
-          inputExamples: [
-            {
-              description: "Who is the most unlucky manager?",
-              input: {
-                n: 1,
-                order: "desc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who has allowed the most points this season?",
-              input: {
-                n: 1,
-                order: "desc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who is the second most unlucky manager?",
-              input: {
-                n: 2,
-                order: "desc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who has the toughest schedule?",
-              input: {
-                n: 1,
-                order: "desc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who is the luckiest manager?",
-              input: {
-                n: 1,
-                order: "asc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who has allowed the fewest points?",
-              input: {
-                n: 1,
-                order: "asc",
-                season: 2025,
-              },
-            },
-          ],
+          // inputExamples: [
+          //   {
+          //     description: "Who is the most unlucky manager?",
+          //     input: {
+          //       n: 1,
+          //       order: "desc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who has allowed the most points this season?",
+          //     input: {
+          //       n: 1,
+          //       order: "desc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who is the second most unlucky manager?",
+          //     input: {
+          //       n: 2,
+          //       order: "desc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who has the toughest schedule?",
+          //     input: {
+          //       n: 1,
+          //       order: "desc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who is the luckiest manager?",
+          //     input: {
+          //       n: 1,
+          //       order: "asc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who has allowed the fewest points?",
+          //     input: {
+          //       n: 1,
+          //       order: "asc",
+          //       season: 2025,
+          //     },
+          //   },
+          // ],
         
           execute: async ({ n, order, season }) => {
-            const team = await getNthPunchingBagTeam({ n, order, season });
-        
+            console.log("🛠️ TOOL CALLED: getPunchingBagRankings");
+            console.log("Arguments:", { n, order, season });
+            
+            const teamObject = await getNthPunchingBagTeam({ n, order, season });
+            console.log("📤 TOOL RESULT:", teamObject);
+
             return {
               rank: n,
               order,
               season,
-              result: team,
+              result: teamObject,
             };
           },
         }),
@@ -602,70 +634,73 @@ export async function POST(req: Request) {
             - Season defaults to 2025 unless the user specifies another season.
           `,
 
-          inputSchema: ManagerStandingsSchema as z.ZodTypeAny,
+          inputSchema: ManagerStandingsSchema,
         
-          inputExamples: [
-            {
-              description: "Who has the best record?",
-              input: {
-                n: 1,
-                order: "desc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who is in first place?",
-              input: {
-                n: 1,
-                order: "desc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who has the second best record?",
-              input: {
-                n: 2,
-                order: "desc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who is third in the standings?",
-              input: {
-                n: 3,
-                order: "desc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who has the worst record?",
-              input: {
-                n: 1,
-                order: "asc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who is in last place?",
-              input: {
-                n: 1,
-                order: "asc",
-                season: 2025,
-              },
-            },
-          ] satisfies {
-            description: string;
-            input: z.input<typeof ManagerStandingsSchema>;
-          }[],
+          // inputExamples: [
+          //   {
+          //     description: "Who has the best record?",
+          //     input: {
+          //       n: 1,
+          //       order: "desc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who is in first place?",
+          //     input: {
+          //       n: 1,
+          //       order: "desc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who has the second best record?",
+          //     input: {
+          //       n: 2,
+          //       order: "desc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who is third in the standings?",
+          //     input: {
+          //       n: 3,
+          //       order: "desc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who has the worst record?",
+          //     input: {
+          //       n: 1,
+          //       order: "asc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who is in last place?",
+          //     input: {
+          //       n: 1,
+          //       order: "asc",
+          //       season: 2025,
+          //     },
+          //   },
+          // ] satisfies {
+          //   description: string;
+          //   input: z.input<typeof ManagerStandingsSchema>;
+          // }[],
 
           execute: async (args: z.output<typeof ManagerStandingsSchema>) => {
-            const team = await getNthBestRankingTeam(args);
-        
+            console.log("🛠️ TOOL CALLED: getManagerWinLossRecords");
+            // console.log("Arguments:", { n, order, season });
+
+            const teamObject = await getNthBestRankingTeam(args);
+            console.log("📤 TOOL RESULT:", teamObject);
             return {
               rank: args.n,
               order: args.order,
               season: args.season,
-              result: team,
+              result: teamObject,
             };
           },
         }),
@@ -692,70 +727,79 @@ export async function POST(req: Request) {
             - Use order = "asc" for lowest, least, worst, bottom, last, or fewest points requests.
             - Season defaults to 2025 unless the user specifies another season.
           `,
+
+          inputSchema: TotalPointsSchema,
         
-          inputExamples: [
-            {
-              description: "Who scored the most points this season?",
-              input: {
-                n: 1,
-                order: "desc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who is the highest scoring manager?",
-              input: {
-                n: 1,
-                order: "desc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who finished second in total points?",
-              input: {
-                n: 2,
-                order: "desc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who has the fifth most Points For?",
-              input: {
-                n: 5,
-                order: "desc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who scored the fewest fantasy points?",
-              input: {
-                n: 1,
-                order: "asc",
-                season: 2025,
-              },
-            },
-            {
-              description: "Who was the lowest scoring owner?",
-              input: {
-                n: 1,
-                order: "asc",
-                season: 2025,
-              },
-            },
-          ],
+          // inputExamples: [
+          //   {
+          //     description: "Who scored the most points this season?",
+          //     input: {
+          //       n: 1,
+          //       order: "desc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who is the highest scoring manager?",
+          //     input: {
+          //       n: 1,
+          //       order: "desc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who finished second in total points?",
+          //     input: {
+          //       n: 2,
+          //       order: "desc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who has the fifth most Points For?",
+          //     input: {
+          //       n: 5,
+          //       order: "desc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who scored the fewest fantasy points?",
+          //     input: {
+          //       n: 1,
+          //       order: "asc",
+          //       season: 2025,
+          //     },
+          //   },
+          //   {
+          //     description: "Who was the lowest scoring owner?",
+          //     input: {
+          //       n: 1,
+          //       order: "asc",
+          //       season: 2025,
+          //     },
+          //   },
+          // ],
         
           execute: async ({ n, order, season }) => {
-            const team = await getNthBestScoringTeam({ n, order, season });
+            console.log("🛠️ TOOL CALLED: getTeamScorerRankings");
+            console.log("Arguments:", { n, order, season });
+
+            const teamObject = await getNthBestScoringTeam({ n, order, season });
+            console.log("📤 TOOL RESULT:", teamObject);
         
             return {
               rank: n,
               order,
               season,
-              result: team,
+              result: teamObject,
             };
           },
         }),
       },
+
+      stopWhen: stepCountIs(2)
+      
     });
 
     console.log("Streaming response back to client");
