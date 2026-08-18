@@ -7,16 +7,65 @@ import ReactMarkdown from "react-markdown";
 export default function ChatPage() {
   const { messages, sendMessage, status } = useChat();
   const [input, setInput] = useState('');
+  const [activeTool, setActiveTool] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const isLoading = status === 'submitted' || status === 'streaming';
+
+  const getToolLabel = (toolName: string) => {
+    switch (toolName) {
+      case "weeklyRankingsTool":
+        return "📅 Analyzing weekly rankings...";
+
+      case "playerRankingsTool":
+        return "🏈 Analyzing player rankings...";
+
+      case "valueRankingsTool":
+        return "📈 Calculating player value...";
+
+      case "punchingBagTool":
+        return "🥊 Checking who took the worst beatings...";
+
+      case "getTeamScorerRankingsTool":
+        return "🔥 Analyzing team scoring...";
+
+      case "badBenchRankingTool":
+        return "🪑 Investigating the league's worst decision makers...";
+
+      case "teamRecordsTool":
+        return "🏆 Checking manager records...";
+
+      default:
+        return "🔎 Consulting the league archives...";
+    }
+  };
+
+  const lastMessage = messages[messages.length - 1];
+
+  const activeToolPart = lastMessage?.parts
+    ?.slice()
+    .reverse()
+    .find(
+      (part) =>
+        part.type.startsWith("tool-") &&
+        "state" in part &&
+        part.state !== "output-available"
+    );
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
       behavior: isLoading ? 'auto' : 'smooth',
     });
   }, [messages, isLoading]);
+
+  useEffect(() => {
+    if (activeToolPart) {
+      setActiveTool(
+        activeToolPart.type.replace("tool-", "")
+      );
+    }
+  }, [activeToolPart?.type]);
 
   return (
 
@@ -88,9 +137,12 @@ export default function ChatPage() {
 
           {isLoading && (
             <div className="text-gray-400 italic text-sm animate-pulse">
-              Consulting the league archives...
+              {activeTool
+                ? getToolLabel(activeTool)
+                : "Consulting the league archives..."}
             </div>
           )}
+
           {/* Invisible scroll target */}
           <div ref={messagesEndRef} />
         </div>
@@ -100,6 +152,8 @@ export default function ChatPage() {
             e.preventDefault();
 
             console.log("Submitting message:", input);
+
+            setActiveTool(null);
 
             sendMessage({
               role: "user",
