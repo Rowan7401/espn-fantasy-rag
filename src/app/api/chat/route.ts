@@ -80,7 +80,7 @@ export async function POST(req: Request) {
         getTeamScorerRankingsTool,
       },
     
-      stopWhen: stepCountIs(2)
+      stopWhen: stepCountIs(3)
     });
 
     console.log("Streaming response back to client");
