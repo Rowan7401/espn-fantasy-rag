@@ -4,7 +4,6 @@ export type Intent =
   | "player_season_stats" // Real NFL player granular metrics (yardage, TDs, targets)
   | "comparison"   // Complex schedule analysis, trends, luck/unlucky metrics
   | "fact"         // Classic RAG lookup
-  | "general"     // Answer from context without requiring a tool
   | "unknown";    // Unclear request; retrieve a small amount and let the model figure it out
 
 export function detectIntent(query: string): Intent {
@@ -57,20 +56,6 @@ export function detectIntent(query: string): Intent {
     return "fact";
   }
 
-  // General conversational questions that may still benefit from RAG
-  if (
-    q.includes("who") ||
-    q.includes("what") ||
-    q.includes("which") ||
-    q.includes("how") ||
-    q.includes("why") ||
-    q.includes("tell me") ||
-    q.includes("can you") ||
-    q.includes("do you know")
-  ) {
-    return "general";
-  }
-
   // Default Fallback: General League Rules / Chat Facts
   // If it doesn't fit skills or relate to fantasy football, fallback to unknown.
   return "unknown";
@@ -83,7 +68,6 @@ export function getRetrievalConfig(intent: Intent): { topK: number } {
     case "comparison": return { topK: 50 };
     case "ranking": return { topK: 30 };
     case "fact": return { topK: 20 };
-    case "general": return { topK: 15 };
     case "unknown": return { topK: 10 };
     default: return { topK: 3 };
   }
