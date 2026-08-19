@@ -7,7 +7,6 @@ import ReactMarkdown from "react-markdown";
 export default function ChatPage() {
   const { messages, sendMessage, status } = useChat();
   const [input, setInput] = useState('');
-  const [activeTool, setActiveTool] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -58,14 +57,6 @@ export default function ChatPage() {
       behavior: isLoading ? 'auto' : 'smooth',
     });
   }, [messages, isLoading]);
-
-  useEffect(() => {
-    if (activeToolPart) {
-      setActiveTool(
-        activeToolPart.type.replace("tool-", "")
-      );
-    }
-  }, [activeToolPart?.type]);
 
   return (
 
@@ -137,8 +128,8 @@ export default function ChatPage() {
 
           {isLoading && (
             <div className="text-gray-400 italic text-sm animate-pulse">
-              {activeTool
-                ? getToolLabel(activeTool)
+              {activeToolPart
+                ? getToolLabel(activeToolPart.type.replace("tool-", ""))
                 : "Consulting the league archives..."}
             </div>
           )}
@@ -152,8 +143,6 @@ export default function ChatPage() {
             e.preventDefault();
 
             console.log("Submitting message:", input);
-
-            setActiveTool(null);
 
             sendMessage({
               role: "user",

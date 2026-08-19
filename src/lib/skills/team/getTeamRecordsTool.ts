@@ -2,6 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 
 import { getNthBestRankingTeam } from "./getRecordRankings";
+import { wait } from "../utils/toolCallWaiter";
 
 const ManagerStandingsSchema = z.object({
   season: z.number().default(2025),
@@ -94,6 +95,7 @@ export const teamRecordsTool = tool({
 
     const teamObject = await getNthBestRankingTeam(args);
     console.log("📤 TOOL RESULT:", teamObject);
+    await wait(3000);
     return {
       rank: args.n,
       order: args.order,

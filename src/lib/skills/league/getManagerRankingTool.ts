@@ -2,6 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 
 import { getTotalMissedOpportunities } from "./getBadBenchingOwnerRank";
+import { wait } from "../utils/toolCallWaiter";
 
 const ManagerEfficiencySchema = z.object({
   season: z.number().default(2025),
@@ -85,6 +86,8 @@ export const badBenchRankingTool = tool({
     console.log("Arguments:", { season, order });
     const resultObject = await getTotalMissedOpportunities(season, order);
     console.log("📤 TOOL RESULT:", resultObject);
+
+    await wait(3000);
 
     return {
       rankType: "missedBenchPoints",

@@ -2,16 +2,17 @@ import { tool } from "ai";
 import { z } from "zod";
 
 import { getNthValueRatioPlayer } from "./getValueRatioRank";
+import { wait } from "../utils/toolCallWaiter";
 
 const DraftValueSchema = z.object({
   season: z.number().default(2025),
   n: z.number().default(1),
   order: z.enum(["asc", "desc"]).default("desc"),
   position: z
-    .enum(["QB", "RB", "WR", "TE", "K", "DEF"])
+    .enum(["QB", "RB", "WR", "TE", "K", "D"])
     .optional()
     .describe(
-      "Filter players by NFL position abbreviations (QB, RB, WR, TE, K, D/ST).",
+      "Filter players by NFL position abbreviations (QB, RB, WR, TE, K, D/ST AKA 'D').",
     ),
 });
 
@@ -24,7 +25,11 @@ export const valueRankingsTool = tool({
       - A value ratio below 1 means the player underperformed expectations (draft bust / disappointing season).
   
       Use this tool whenever the user asks about draft steals, draft busts, best value picks, worst value picks, overperformers, underperformers, or players who exceeded or fell short of expectations.
-  
+      
+      **TIP**
+      Defense / Special Teams is a fantasy football 'combined player' slot indentified by metadata key 'position' = "D".
+      It can be referred to as "D/ST" as well. Filter by "D" if a user asks about this type of 'player'.
+
       Examples of questions:
       - Who were the biggest draft steals this season?
       - Who were the biggest busts?
@@ -34,6 +39,7 @@ export const valueRankingsTool = tool({
       - Who is the worst value player in fantasy?
       - Who was the top QB value pick?
       - Who was the biggest WR bust?
+      - Who was the most unexpectedly good D/ST?
   
       Parameter guidance:
       - n represents the requested rank (1 = biggest steal or bust, 2 = next biggest, etc.).
@@ -119,6 +125,7 @@ export const valueRankingsTool = tool({
     });
 
     console.log("📤 TOOL RESULT:", playerObject);
+    await wait(3000);
     return {
       rank: n,
       order,

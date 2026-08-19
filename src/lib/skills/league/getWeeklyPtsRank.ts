@@ -33,6 +33,7 @@ function parseTopPlayerMetadata(topPlayersStr: string | undefined): { name: stri
       };
     }
   } catch (e) {
+    console.log("getWeeklyPtsRank Error: " + e)
     return fallback;
   }
 

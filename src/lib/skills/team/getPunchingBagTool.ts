@@ -1,5 +1,6 @@
 import { tool } from "ai";
 import { z } from "zod";
+import { wait } from "../utils/toolCallWaiter";
 
 import { getNthPunchingBagTeam } from "./getPunchingBagRankings";
 
@@ -87,10 +88,13 @@ export const punchingBagTool = tool({
 
   execute: async ({ n, order, season }) => {
     console.log("🛠️ TOOL CALLED: getPunchingBagRankings");
+
     console.log("Arguments:", { n, order, season });
 
     const teamObject = await getNthPunchingBagTeam({ n, order, season });
     console.log("📤 TOOL RESULT:", teamObject);
+
+    await wait(3000);
 
     return {
       rank: n,
