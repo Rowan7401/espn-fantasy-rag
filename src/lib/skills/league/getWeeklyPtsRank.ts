@@ -1,5 +1,5 @@
 import { BoxScoreSummary } from "@/lib/types/box-score-summary-metadata";
-import { getBoxScoreSummaries } from "./getBoxScoreSummaryMetadata";
+import { getBoxScoreSummaries } from "../../types/getBoxScoreSummaryMetadata";
 
 type OwnerWeeklyStats = {
   owner: string;

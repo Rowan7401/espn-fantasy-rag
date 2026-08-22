@@ -1,5 +1,5 @@
 import { ExpectationSummary } from "@/lib/types/expectation-vs-reality-metadata";
-import { getExpectationSummary } from "./getExpectationMetadata";
+import { getExpectationSummary } from "../../types/getExpectationMetadata";
 
 export function sortPlayerByValueRatio(
   players: ExpectationSummary[],
