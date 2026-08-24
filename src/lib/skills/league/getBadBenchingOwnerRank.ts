@@ -1,4 +1,4 @@
-import { getBoxScoreSummaries } from "./getBoxScoreSummaryMetadata";
+import { getBoxScoreSummaries } from "../../types/getBoxScoreSummaryMetadata";
 
 type MissedOpportunityCount = {
   owner: string;

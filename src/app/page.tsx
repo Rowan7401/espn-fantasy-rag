@@ -1,13 +1,62 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useChat } from '@ai-sdk/react';
+import ReactMarkdown from "react-markdown";
 
 export default function ChatPage() {
   const { messages, sendMessage, status } = useChat();
   const [input, setInput] = useState('');
 
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
   const isLoading = status === 'submitted' || status === 'streaming';
+
+  const getToolLabel = (toolName: string) => {
+    switch (toolName) {
+      case "weeklyRankingsTool":
+        return "📅 Analyzing weekly rankings...";
+
+      case "playerRankingsTool":
+        return "🏈 Analyzing player rankings...";
+
+      case "valueRankingsTool":
+        return "📈 Calculating player value...";
+
+      case "punchingBagTool":
+        return "🥊 Checking who took the worst beatings...";
+
+      case "getTeamScorerRankingsTool":
+        return "🔥 Analyzing team scoring...";
+
+      case "badBenchRankingTool":
+        return "🪑 Investigating the league's worst decision makers...";
+
+      case "teamRecordsTool":
+        return "🏆 Checking manager records...";
+
+      default:
+        return "🔎 Consulting the league archives...";
+    }
+  };
+
+  const lastMessage = messages[messages.length - 1];
+
+  const activeToolPart = lastMessage?.parts
+    ?.slice()
+    .reverse()
+    .find(
+      (part) =>
+        part.type.startsWith("tool-") &&
+        "state" in part &&
+        part.state !== "output-available"
+    );
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: isLoading ? 'auto' : 'smooth',
+    });
+  }, [messages, isLoading]);
 
   return (
 
@@ -36,13 +85,42 @@ export default function ChatPage() {
               </span>
 
               {m.parts?.map((part, i) => {
-                if (part.type === 'text') {
+                if (part.type === "text") {
                   return (
-                    <p key={i} className="text-gray-800 whitespace-pre-wrap">
-                      {part.text}
-                    </p>
+                    <div key={i} className="text-gray-800">
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children }) => (
+                            <p className="mb-2 last:mb-0">{children}</p>
+                          ),
+                          strong: ({ children }) => (
+                            <strong className="font-bold">{children}</strong>
+                          ),
+                          em: ({ children }) => (
+                            <em className="italic">{children}</em>
+                          ),
+                          ul: ({ children }) => (
+                            <ul className="list-disc ml-5 mb-2">{children}</ul>
+                          ),
+                          ol: ({ children }) => (
+                            <ol className="list-decimal ml-5 mb-2">{children}</ol>
+                          ),
+                          li: ({ children }) => (
+                            <li className="mb-1">{children}</li>
+                          ),
+                          code: ({ children }) => (
+                            <code className="bg-gray-100 rounded px-1 py-0.5 text-sm">
+                              {children}
+                            </code>
+                          ),
+                        }}
+                      >
+                        {part.text}
+                      </ReactMarkdown>
+                    </div>
                   );
                 }
+
                 return null;
               })}
             </div>
@@ -50,9 +128,14 @@ export default function ChatPage() {
 
           {isLoading && (
             <div className="text-gray-400 italic text-sm animate-pulse">
-              Consulting the league archives...
+              {activeToolPart
+                ? getToolLabel(activeToolPart.type.replace("tool-", ""))
+                : "Consulting the league archives..."}
             </div>
           )}
+
+          {/* Invisible scroll target */}
+          <div ref={messagesEndRef} />
         </div>
 
         <form

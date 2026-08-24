@@ -18,6 +18,15 @@ export async function getContext(query: string): Promise<{ contextText: string; 
   // Build dynamic metadata filters based on the detected intent
   const filter: Record<string, any> = {};
 
+  // No tool exists yet for specific season long stats. Simply filter by chunk of records with type = 'player_season_stats'
+  if (intent === "player_season_stats") {
+    filter.type = "player_season_stats";
+  
+    console.log(
+      "📊 Player season stats intent detected. Filtering Pinecone to player_season_stats records."
+    );
+  }
+
   if (intent === "weekly") {
     // Look for patterns like "week 4", "week 12", "w5", etc.
     const weekMatch = query.match(/\b(?:week|w)\s*(\d{1,2})\b/i);

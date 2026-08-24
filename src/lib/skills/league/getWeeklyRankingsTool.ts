@@ -2,6 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 
 import { getWeeklyRankingsAndAwards } from "./getWeeklyPtsRank";
+import { wait } from "../utils/toolCallWaiter";
 
 const WeeklyPerformanceSchema = z.object({
   season: z.number().default(2025),
@@ -105,6 +106,7 @@ export const weeklyRankingsTool = tool({
 
     const resultObject = Object.fromEntries(data);
     console.log("📤 TOOL RESULT:", resultObject);
+    await wait(3000);
     return {
       type: "fullSeason",
       season,

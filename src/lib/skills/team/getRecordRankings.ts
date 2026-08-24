@@ -1,5 +1,5 @@
 import { TeamSummary } from "@/lib/types/team-summary-metadata";
-import { getTeamSummaries } from "./getTeamSummaryMetadata";
+import { getTeamSummaries } from "../../types/getTeamSummaryMetadata";
 
 export function sortTeamByWins(
   teams: TeamSummary[],

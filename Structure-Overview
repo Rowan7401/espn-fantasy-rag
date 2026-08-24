@@ -10,34 +10,30 @@ my-fantasy-rag/
 │   ├── app/                  # Next.js App Router
 │   │   ├── api/
 │   │   │   ├── chat/         # The endpoint your UI calls to talk to the AI
-│   │   │   │   └── route.ts
-│   │   │   └── ingest/       # (Optional) Endpoint to trigger data loading via web
-│   │   │       └── route.ts
+│   │   │   └── route.ts
+│   │   │  
 │   │   ├── globals.css
 │   │   ├── layout.tsx
 │   │   └── page.tsx          # The main chat interface
 │   │
-│   ├── components/           # React UI Components
-│   │   ├── Chat/
-│   │   │   ├── ChatInput.tsx
-│   │   │   ├── ChatMessage.tsx
-│   │   │   └── ChatWindow.tsx
-│   │   └── Layout/
-│   │       └── Header.tsx
-│   │
 │   ├── lib/                  # The "Brain" (Backend Logic & Clients)
 │   │   ├── clients/          # Database & API configurations
 │   │   │   ├── pinecone.ts   # Pinecone client singleton
-│   │   │   └── openai.ts     # OpenAI client singleton
+│   │   │   ├── openai.ts     # OpenAI client singleton
+|   |   |   ├── openai.ts     # User intent detection
 │   │   │
+|   |   ├── dev/             # Testing/debugging folder for each skill call response
+│   │   │   
 │   │   ├── espn/             # ESPN specific logic
 │   │   │   ├── fetch_stats.py  # The python fetcher with cookies
-│   │   │   └── types.ts      # TypeScript interfaces for ESPN JSON
+│   │   │   ├── data-csv/      # Directory store store raw excel formatted stats from API
 │   │   │
-│   │   └── rag/              # RAG specific logic
-│   │       ├── chunking.ts   # Your semantic chunking logic
-│   │       ├── embed.ts      # Helper to create embeddings
-│   │       └── context.ts    # Logic to query Pinecone and format context
+│   │   ├── rag/              # RAG specific logic
+│   │   |    └── context.ts    # Logic to query Pinecone and format context
+│   │   ├── skills/              # Directory to host skills and their descriptions for RAG bot use
+│   │   |    └── context.ts
+|   |   └── types/              # Typed interfaces for specific record chunks using Pinecone metadata keys 
+│   │   
 │   │
-│   └── scripts/              # Standalone scripts for heavy lifting
-│       └── ingest-data.ts    # Run this locally to fill the DB (Better than API route)
+│   └── scripts/              # Standalone scripts for formatting records for upsert
+│       └── ingest-data.ts    # Run this locally to fill the DB (Manual Upserting in chunks)

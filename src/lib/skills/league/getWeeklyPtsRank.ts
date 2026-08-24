@@ -1,5 +1,5 @@
 import { BoxScoreSummary } from "@/lib/types/box-score-summary-metadata";
-import { getBoxScoreSummaries } from "./getBoxScoreSummaryMetadata";
+import { getBoxScoreSummaries } from "../../types/getBoxScoreSummaryMetadata";
 
 type OwnerWeeklyStats = {
   owner: string;
@@ -33,6 +33,7 @@ function parseTopPlayerMetadata(topPlayersStr: string | undefined): { name: stri
       };
     }
   } catch (e) {
+    console.log("getWeeklyPtsRank Error: " + e)
     return fallback;
   }
 
